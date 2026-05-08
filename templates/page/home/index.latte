@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AbieSoft PiGo - Starter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --pigo-blue: #2563eb;
+            --php-purple: #777BB4;
+            --go-cyan: #00add8;
+            --pixel-bg: #202124;
+            --pixel-header: #2b2c2f;
+            --pixel-text: #e8eaed;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #ffffff;
+            color: #213547;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .logo-group {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .logo {
+            height: 5rem;
+            width: auto;
+            transition: transform 0.3s ease, filter 0.3s ease;
+            cursor: pointer;
+        }
+
+        .logo:hover {
+            transform: translateY(-8px);
+        }
+
+        .logo-php:hover { filter: drop-shadow(0 0 2em #777bb466); }
+        .logo-pigo:hover { filter: drop-shadow(0 0 2em #2563eb66); }
+        .logo-go:hover { filter: drop-shadow(0 0 2em #00add866); }
+
+        .main-card {
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .response-container {
+            margin-top: 3rem;
+            text-align: left;
+            background-color: #1e1e1e;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .response-header {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 24px;
+        }
+
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
+        .dot-1 { background-color: #ff5f56; }
+        .dot-2 { background-color: #ffbd2e; }
+        .dot-3 { background-color: #27c93f; }
+
+        .pixel-terminal {
+            margin-top: 3rem;
+            text-align: left;
+            background-color: var(--pixel-bg);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+            transition: transform 0.2s ease;
+        }
+
+        .terminal-header {
+            background-color: var(--pixel-header);
+            height: 40px;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            justify-content: space-between;
+        }
+
+        .terminal-title {
+            color: #9aa0a6;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 12px;
+        }
+
+        .ctrl { width: 12px; height: 12px; border-radius: 50%; opacity: 0.8; }
+        .ctrl-close { border: 1px solid #5f6368; }
+        .ctrl-min { border: 1px solid #5f6368; }
+        .ctrl-max { border: 1px solid #5f6368; }
+
+        .terminal-body {
+            padding: 24px;
+        }
+
+        pre {
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--pixel-text);
+            margin: 0;
+            overflow-x: auto;
+        }
+
+        .prompt {
+            color: #81c995; /* Pixelbook green prompt */
+            margin-right: 8px;
+            user-select: none;
+        }
+
+        .key { color: #ce9178; }
+        .string { color: #b5cea8; }
+
+        .btn-ping {
+            background-color: #f1f5f9;
+            color: #475569;
+            padding: 0.6rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+            border: 1px solid #e2e8f0;
+            margin-top: 1.5rem;
+        }
+
+        .btn-ping:hover {
+            background-color: #e2e8f0;
+            border-color: #cbd5e1;
+        }
+
+        .btn-ping:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-card">
+        
+        <!-- Logo Section -->
+        <div class="logo-group">
+            <!-- PHP Logo -->
+            <img src="https://images.seeklogo.com/logo-png/26/1/php-logo-png_seeklogo-265704.png" alt="Logo PHP" class="h-[90px] md:h-[150px]">
+
+            <!-- AbieSoft Logo -->
+            <div class="w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center text-white text-4xl font-black shadow-xl logo logo-pigo">
+                A
+            </div>
+
+            <!-- Golang Logo -->
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT64MUSJsELElo4AMBfmvUoF-2Cy-j3dkJ52Q&s" alt="Logo Golang" Class="h-[70px] md:h-[100px]">
+        </div>
+
+        <h1 class="text-3xl md:text-4xl font-extrabold text-slate-800 tracking-tight">
+            AbieSoft <span class="text-blue-600">PiGo</span>
+        </h1>
+        
+        <p class="text-slate-500 mt-4 text-lg">
+            <span class="text-[#8892BE] font-semibold italic">Php Framework</span>. Rasa <span class="text-[#00ADD8] font-semibold italic">Golang Framework</span>.
+        </p>
+
+        <!-- Response Area -->
+        <div class="pixel-terminal" id="terminal-box">
+            <div class="terminal-header">
+                <div class="terminal-title">pigo@abiesoft:~/server</div>
+                <div class="window-controls">
+                    
+                </div>
+            </div>
+            <div class="terminal-body">
+<pre id="output-json"></span></pre>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <button onclick="getDataGolangApi(this.dataset.getby)" data-getby="php" class="btn-ping">
+                Refresh Dengan Php
+            </button>
+            <button onclick="getDataGolangApi(this.dataset.getby)" data-getby="go" class="btn-ping">
+                Refresh Dengan Go
+            </button>
+        </div>
+
+        <footer class="mt-16 text-slate-400 text-xs font-medium uppercase tracking-widest">
+            Edit <code class="bg-slate-100 px-1.5 py-0.5 rounded text-blue-600">templates/page/home/index.latte</code> untuk mulai
+        </footer>
+    </div>
+
+    <div id="app" data-baseurl="{$baseurl}" data-token="{$token}" data-mode="{$mode}" data-output="{$output}" data-page="{$page}"></div>
+
+    <script src="{$baseurl}assets/js/main.js"></script>
+
+    <script n:syntax="off">
+        let outputJsonView = el("#output-json");
+        let info = "start";
+        function getDataGolangApi(getby){
+            console.log(getby);
+            getData("wellcome/"+info+"/"+getby).then(result =>{
+                outputJsonView.innerHTML = result.data;
+                if(info == "start"){
+                    info = "pengenalan";
+                }else if(info == "pengenalan"){
+                    info = "fitur1";
+                }else if(info == "fitur1"){
+                    info = "fitur2";
+                }else if(info == "fitur2"){
+                    info = "ending";
+                }else {
+                    info = "start";
+                }
+            },500);
+        }
+
+        getDataGolangApi("go");
+    </script>
+</body>
+</html>

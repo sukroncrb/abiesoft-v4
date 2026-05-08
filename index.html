@@ -1,0 +1,2163 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TiketKuy - Beli Tiket Online</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        /* Custom Animations */
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        .animate-slide-in { animation: slideIn 0.4s ease-out forwards; }
+        .animate-toast-in { animation: toastIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .animate-toast-out { animation: toastOut 0.3s ease-in forwards; }
+        
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: scale(0.98); } 
+            to { opacity: 1; transform: scale(1); } 
+        }
+        @keyframes slideIn { 
+            from { opacity: 0; transform: translateX(20px); } 
+            to { opacity: 1; transform: translateX(0); } 
+        }
+        @keyframes toastIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes toastOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+
+        /* Hide specific elements during printing */
+        @media print {
+            body { background-color: white !important; }
+            .print-hidden { display: none !important; }
+            .print-exact { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-gray-900 selection:bg-blue-200">
+
+    <!-- Navbar -->
+    <nav class="bg-blue-600 text-white shadow-md print-hidden">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2 cursor-pointer" onclick="app.goHome()">
+                <i data-lucide="ticket" class="w-8 h-8"></i>
+                <span class="text-xl font-bold tracking-tight">TiketKuy</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <div id="nav-actions">
+                    <!-- Back button will be injected here -->
+                </div>
+                <div id="nav-auth" class="border-l border-blue-400 pl-4 ml-2 flex items-center gap-3">
+                    <!-- Auth buttons will be injected here -->
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main id="app-content" class="min-h-[calc(100vh-80px)]">
+        <!-- Views will be injected here -->
+    </main>
+
+    <!-- Modal Container -->
+    <div id="modal-container"></div>
+    
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-[60] flex flex-col gap-3 pointer-events-none w-full max-w-sm px-4 md:px-0"></div>
+
+    <script>
+        // --- MOCK DATA AWAL ---
+        const INITIAL_EVENTS = [
+            {
+                id: 'e1',
+                title: 'Konser Musik Raya 2026',
+                date: '15 Agustus 2026',
+                time: '19:00 WIB',
+                location: 'Stadion Utama Gelora Bung Karno, Jakarta',
+                image: 'https://images.unsplash.com/photo-1540039155733-d7696d4eb98b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+                categories: [
+                    { id: 'c1', name: 'Festival (Berdiri)', price: 500000, available: 100 },
+                    { id: 'c2', name: 'CAT 2 (Duduk)', price: 850000, available: 50 },
+                    { id: 'c3', name: 'VIP (Duduk)', price: 1500000, available: 20 },
+                ]
+            },
+            {
+                id: 'e2',
+                title: 'Pertandingan Timnas vs Jepang',
+                date: '20 September 2026',
+                time: '19:30 WIB',
+                location: 'Stadion Pakansari, Cibinong',
+                image: 'https://images.unsplash.com/photo-1518605368461-1ee71161fc23?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+                categories: [
+                    { id: 'c4', name: 'Tribun Utara', price: 150000, available: 500 },
+                    { id: 'c5', name: 'Tribun Timur', price: 250000, available: 300 },
+                    { id: 'c6', name: 'VIP Barat', price: 750000, available: 100 },
+                ]
+            },
+            {
+                id: 'e3',
+                title: 'Teater: Bawang Merah Bawang Putih',
+                date: '05 Oktober 2026',
+                time: '16:00 WIB',
+                location: 'Gedung Kesenian Jakarta',
+                image: 'https://images.unsplash.com/photo-1507676184212-d0330a15233c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+                categories: [
+                    { id: 'c7', name: 'Balkon', price: 100000, available: 80 },
+                    { id: 'c8', name: 'Reguler', price: 200000, available: 120 },
+                    { id: 'c9', name: 'VVIP', price: 400000, available: 30 },
+                ]
+            },
+            {
+                id: 'e4',
+                title: 'Standup Comedy Spesial',
+                date: '10 November 2026',
+                time: '20:00 WIB',
+                location: 'Usmar Ismail Hall, Jakarta',
+                image: 'https://images.unsplash.com/photo-1585699324551-f6c309eedeca?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+                categories: [
+                    { id: 'c10', name: 'Silver', price: 150000, available: 150 },
+                    { id: 'c11', name: 'Gold', price: 250000, available: 100 }
+                ]
+            },
+            {
+                id: 'e5',
+                title: 'Pameran Seni Rupa Modern',
+                date: '01 - 05 Desember 2026',
+                time: '10:00 - 21:00 WIB',
+                location: 'Galeri Nasional Indonesia, Jakarta',
+                image: 'https://images.unsplash.com/photo-1536924940846-227afb31e2a5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+                categories: [
+                    { id: 'c12', name: 'Tiket Masuk Umum', price: 50000, available: 1000 },
+                    { id: 'c13', name: 'Pelajar / Mahasiswa', price: 25000, available: 500 }
+                ]
+            },
+            {
+                id: 'e6',
+                title: 'Festival Kuliner Nusantara',
+                date: '12 Desember 2026',
+                time: '09:00 - 22:00 WIB',
+                location: 'Lotte Shopping Avenue, Jakarta',
+                image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+                categories: [
+                    { id: 'c14', name: 'Early Bird', price: 35000, available: 200 },
+                    { id: 'c15', name: 'On The Spot', price: 50000, available: 800 }
+                ]
+            }
+        ];
+
+        const INITIAL_ORDERS = [
+            {
+                orderId: 'TKT-X9A2B4C1',
+                event: INITIAL_EVENTS[0],
+                category: INITIAL_EVENTS[0].categories[0],
+                quantity: 2,
+                buyer: { name: 'Budi Santoso', email: 'budi@example.com', phone: '081234567890' },
+                paymentMethod: 'QRIS',
+                purchaseDate: '24/02/2026, 14:30:00',
+                total: 1000000,
+                adminFee: 5000
+            },
+            {
+                orderId: 'TKT-Y7C5D3E2',
+                event: INITIAL_EVENTS[1],
+                category: INITIAL_EVENTS[1].categories[1],
+                quantity: 1,
+                buyer: { name: 'Siti Aminah', email: 'siti@example.com', phone: '089876543210' },
+                paymentMethod: 'GoPay',
+                purchaseDate: '25/02/2026, 09:15:00',
+                total: 250000,
+                adminFee: 5000
+            },
+            {
+                orderId: 'TKT-Z1F2G3H4',
+                event: INITIAL_EVENTS[2],
+                category: INITIAL_EVENTS[2].categories[2],
+                quantity: 3,
+                buyer: { name: 'Andi Wijaya', email: 'andi@example.com', phone: '085678901234' },
+                paymentMethod: 'QRIS',
+                purchaseDate: '25/02/2026, 11:45:00',
+                total: 1200000,
+                adminFee: 5000
+            },
+            {
+                orderId: 'TKT-W5I6J7K8',
+                event: INITIAL_EVENTS[3],
+                category: INITIAL_EVENTS[3].categories[0],
+                quantity: 2,
+                buyer: { name: 'Dewi Lestari', email: 'dewi@example.com', phone: '081122334455' },
+                paymentMethod: 'GoPay',
+                purchaseDate: '25/02/2026, 13:20:00',
+                total: 300000,
+                adminFee: 5000
+            }
+        ];
+
+        const PAYMENT_METHODS = [
+            { id: 'ew_gopay', name: 'GoPay', type: 'ewallet', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Gopay_logo.svg/512px-Gopay_logo.svg.png' },
+            { id: 'qris', name: 'QRIS', type: 'qris', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Logo_QRIS.svg/512px-Logo_QRIS.svg.png' }
+        ];
+
+        // --- GLOBAL FUNCTIONS UNTUK DOM DINAMIS ---
+        window.addCatRow = function() {
+            const container = document.getElementById('categories-container');
+            const div = document.createElement('div');
+            div.className = "flex flex-col md:flex-row gap-3 category-row bg-gray-50 p-3 rounded-lg border border-gray-200";
+            div.innerHTML = `
+                <input type="text" placeholder="Nama Kategori (mis: VIP)" class="cat-name p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none flex-1" required>
+                <input type="number" placeholder="Harga (Rp)" class="cat-price p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none w-full md:w-1/3" required min="0">
+                <input type="number" placeholder="Kuota" class="cat-quota p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none w-full md:w-1/4" required min="1">
+                <button type="button" onclick="this.parentElement.remove()" class="bg-red-100 text-red-600 hover:bg-red-200 px-4 rounded-xl font-bold transition">X</button>
+            `;
+            container.appendChild(div);
+        }
+
+        window.togglePassword = function(inputId, btnId) {
+            const input = document.getElementById(inputId);
+            const btn = document.getElementById(btnId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.innerHTML = '<i data-lucide="eye-off" class="w-5 h-5 text-blue-600"></i>';
+            } else {
+                input.type = 'password';
+                btn.innerHTML = '<i data-lucide="eye" class="w-5 h-5 text-gray-400"></i>';
+            }
+            lucide.createIcons();
+        }
+
+        // --- APP STATE & LOGIC ---
+        const app = {
+            state: {
+                step: 'home', 
+                lastStep: 'home', 
+                events: [...INITIAL_EVENTS],
+                orders: [...INITIAL_ORDERS], 
+                editingEventId: null,
+                
+                // --- Roles & Profiles ---
+                isAdmin: false,
+                isCustomer: false,
+                userProfile: {
+                    name: 'Administrator',
+                    password: 'admin',
+                    photo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+                },
+                customerProfile: null, 
+
+                // --- Flow Tiket ---
+                selectedEvent: null,
+                selectedCategory: null,
+                quantity: 1,
+                buyerInfo: { name: '', email: '', phone: '' },
+                verificationMethod: 'email', 
+                otpCode: null, 
+                paymentMethod: '',
+                isProcessing: false,
+                isLoggingIn: false, 
+                isSavingProfile: false, 
+                isSavingEvent: false, 
+                orderData: null,
+                activeModal: null, 
+                itemToDelete: null,
+                
+                // --- Search & Load More ---
+                searchHome: '',
+                limitHome: 3, 
+                searchAdmin: '',
+                limitAdmin: 3,
+                searchOrder: '',
+                limitOrder: 3,
+
+                // --- CAPTCHA & Toasts ---
+                captchaText: '',
+                toasts: [],
+                adminActiveTab: 'events' 
+            },
+
+            // --- TOAST LOGIC ---
+            showToast(message, type = 'success') {
+                const id = Date.now();
+                this.state.toasts.push({ id, message, type });
+                this.renderToasts();
+
+                setTimeout(() => {
+                    this.removeToast(id);
+                }, 3000);
+            },
+
+            removeToast(id) {
+                const toastEl = document.getElementById(`toast-${id}`);
+                if (toastEl) {
+                    toastEl.classList.remove('animate-toast-in');
+                    toastEl.classList.add('animate-toast-out');
+                    setTimeout(() => {
+                        this.state.toasts = this.state.toasts.filter(t => t.id !== id);
+                        this.renderToasts();
+                    }, 300);
+                } else {
+                    this.state.toasts = this.state.toasts.filter(t => t.id !== id);
+                    this.renderToasts();
+                }
+            },
+
+            // --- HELPERS ---
+            formatRupiah(number) {
+                return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
+            },
+
+            generateOrderId() {
+                return 'TKT-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+            },
+
+            // --- SEARCH & LOAD MORE ACTIONS ---
+            updateSearchHome(val) {
+                this.state.searchHome = val.toLowerCase();
+                this.state.limitHome = 3; 
+                this.renderHomeList();
+            },
+            
+            loadMoreHome() {
+                this.state.limitHome += 3;
+                this.renderHomeList();
+            },
+
+            updateSearchAdmin(val) {
+                this.state.searchAdmin = val.toLowerCase();
+                this.state.limitAdmin = 3; 
+                this.renderAdminList();
+            },
+
+            loadMoreAdmin() {
+                this.state.limitAdmin += 3;
+                this.renderAdminList();
+            },
+
+            updateSearchOrder(val) {
+                this.state.searchOrder = val.toLowerCase();
+                this.state.limitOrder = 3; 
+                this.renderAdminOrders();
+            },
+
+            loadMoreOrders() {
+                this.state.limitOrder += 3;
+                this.renderAdminOrders();
+            },
+
+            switchAdminTab(tabName) {
+                this.state.adminActiveTab = tabName;
+                this.render();
+            },
+
+            // --- NAVIGATION ---
+            goHome() {
+                if (this.state.step === 'receipt') return;
+                this.state.step = 'home';
+                this.render();
+            },
+
+            goBack() {
+                if (this.state.step === 'details') this.state.step = 'home';
+                else if (this.state.step === 'checkout') this.state.step = 'details';
+                else if (this.state.step === 'payment') this.state.step = 'checkout';
+                else if (this.state.step === 'waiting_payment') this.state.step = 'payment';
+                else if (this.state.step === 'adminAddEvent') this.state.step = 'admin';
+                else if (this.state.step === 'profile') this.state.step = 'admin';
+                else if (this.state.step === 'login' || this.state.step === 'register') this.state.step = 'home';
+                else if (this.state.step === 'customer_dashboard') this.state.step = 'home';
+                this.render();
+            },
+
+            // --- AUTHENTICATION (LOGIN & REGISTER) ---
+            generateCaptcha() {
+                const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+                let captcha = '';
+                for (let i = 0; i < 6; i++) {
+                    captcha += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                this.state.captchaText = captcha;
+            },
+
+            refreshCaptcha() {
+                this.generateCaptcha();
+                this.render();
+            },
+
+            goLogin() {
+                this.generateCaptcha();
+                this.state.step = 'login';
+                this.render();
+            },
+
+            goRegister() {
+                this.state.step = 'register';
+                this.render();
+            },
+
+            async handleRegister(e) {
+                e.preventDefault();
+                const form = e.target;
+                const name = form.name.value;
+                const email = form.email.value;
+                const phone = form.phone.value;
+                const password = form.password.value;
+                const confirmPassword = form.confirm_password.value;
+
+                if (password !== confirmPassword) {
+                    this.showToast('Password dan Konfirmasi Password tidak cocok!', 'error');
+                    return;
+                }
+
+                this.state.isLoggingIn = true;
+                this.render();
+
+                await new Promise(r => setTimeout(r, 1000));
+
+                this.state.customerProfile = { name, email, phone, password };
+                this.state.isCustomer = true;
+                this.state.isAdmin = false; 
+                this.state.isLoggingIn = false;
+
+                this.showToast(`Pendaftaran berhasil! Selamat datang ${name}.`, 'success');
+                this.state.step = 'home';
+                this.render();
+            },
+
+            async handleLogin(e) {
+                e.preventDefault();
+                const u = e.target.username.value;
+                const p = e.target.password.value;
+                const c = e.target.captcha.value;
+                
+                if (c.toLowerCase() !== this.state.captchaText.toLowerCase()) {
+                    this.showToast('Kode verifikasi CAPTCHA salah! Silakan coba lagi.', 'error');
+                    this.refreshCaptcha();
+                    return;
+                }
+
+                this.state.isLoggingIn = true;
+                this.render(); 
+
+                await new Promise(r => setTimeout(r, 1000));
+
+                this.state.isLoggingIn = false;
+
+                if (u === 'admin' && p === this.state.userProfile.password) {
+                    this.showToast('Login Admin Berhasil!', 'success');
+                    this.state.isAdmin = true;
+                    this.state.isCustomer = false;
+                    this.state.step = 'admin';
+                    this.render();
+                } 
+                else if (this.state.customerProfile && u === this.state.customerProfile.email && p === this.state.customerProfile.password) {
+                    this.showToast(`Login Berhasil! Selamat datang ${this.state.customerProfile.name}.`, 'success');
+                    this.state.isCustomer = true;
+                    this.state.isAdmin = false;
+                    this.state.step = 'home';
+                    this.render();
+                } 
+                else {
+                    this.showToast('Email/Username atau password salah!', 'error');
+                    this.refreshCaptcha(); 
+                    this.render();
+                }
+            },
+
+            showLogoutModal() {
+                this.state.activeModal = 'logout';
+                this.renderModal();
+            },
+
+            confirmLogout() {
+                this.state.isAdmin = false;
+                this.state.isCustomer = false;
+                this.state.step = 'home';
+                this.closeModal();
+                this.showToast('Anda telah berhasil keluar.', 'success');
+                this.render();
+            },
+
+            goCustomerDashboard() {
+                this.state.step = 'customer_dashboard';
+                this.render();
+            },
+
+            // --- ADMIN EVENT ACTIONS ---
+            showDeleteModal(eventId) {
+                this.state.itemToDelete = eventId;
+                this.state.activeModal = 'delete';
+                this.renderModal();
+            },
+
+            confirmDelete() {
+                const eventId = this.state.itemToDelete;
+                this.state.events = this.state.events.filter(e => e.id !== eventId);
+                this.closeModal();
+                this.showToast('Event berhasil dihapus.', 'success');
+                
+                if (this.state.step === 'admin') {
+                    this.renderAdminList();
+                } else {
+                    this.render();
+                }
+            },
+
+            closeModal() {
+                this.state.activeModal = null;
+                this.state.itemToDelete = null;
+                this.renderModal();
+            },
+
+            goProfile() {
+                this.state.step = 'profile';
+                this.render();
+            },
+
+            async saveProfile(e) {
+                e.preventDefault();
+                
+                const form = e.target;
+                const newName = form.name.value;
+                const newPassword = form.password.value;
+                const fileInput = form.photo;
+                const file = fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+
+                this.state.isSavingProfile = true;
+                this.render();
+
+                await new Promise(r => setTimeout(r, 1000));
+
+                let newPhoto = this.state.userProfile.photo;
+
+                if (file) {
+                    newPhoto = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => resolve(e.target.result);
+                        reader.readAsDataURL(file);
+                    });
+                }
+
+                this.state.userProfile.name = newName;
+                this.state.userProfile.photo = newPhoto;
+                
+                if (newPassword.trim() !== '') {
+                    this.state.userProfile.password = newPassword;
+                    this.showToast('Profil dan Password berhasil diperbarui!', 'success');
+                } else {
+                    this.showToast('Profil berhasil diperbarui!', 'success');
+                }
+                
+                this.state.isSavingProfile = false;
+                this.render(); 
+            },
+
+            goAdminDashboard() {
+                this.state.step = 'admin';
+                this.render();
+            },
+
+            goAddEvent() {
+                this.state.editingEventId = null;
+                this.state.step = 'adminAddEvent';
+                this.render();
+            },
+
+            goEditEvent(eventId) {
+                this.state.editingEventId = eventId;
+                this.state.step = 'adminAddEvent';
+                this.render();
+            },
+
+            async submitNewEvent(e) {
+                e.preventDefault();
+                
+                const form = e.target;
+                const title = form.title.value;
+                const date = form.date.value;
+                const time = form.time.value;
+                const location = form.location.value;
+                const fileInput = form.image;
+                const file = fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+
+                const rows = document.querySelectorAll('.category-row');
+                if (rows.length === 0) {
+                    this.showToast('Harap tambahkan minimal 1 kategori tiket!', 'error');
+                    return;
+                }
+
+                const categories = Array.from(rows).map((row, index) => {
+                    return {
+                        id: 'c_new_' + Date.now() + '_' + index,
+                        name: row.querySelector('.cat-name').value,
+                        price: parseInt(row.querySelector('.cat-price').value),
+                        available: parseInt(row.querySelector('.cat-quota').value)
+                    };
+                });
+
+                this.state.isSavingEvent = true;
+                this.render();
+
+                await new Promise(r => setTimeout(r, 1500));
+
+                let imgUrl = 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
+                
+                if (this.state.editingEventId) {
+                    const existingEvent = this.state.events.find(ev => ev.id === this.state.editingEventId);
+                    if (existingEvent) imgUrl = existingEvent.image;
+                }
+
+                if (file) {
+                    imgUrl = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => resolve(e.target.result);
+                        reader.readAsDataURL(file);
+                    });
+                }
+
+                const newEventData = {
+                    id: this.state.editingEventId ? this.state.editingEventId : 'e_' + Date.now(),
+                    title: title,
+                    date: date,
+                    time: time,
+                    location: location,
+                    image: imgUrl,
+                    categories: categories
+                };
+
+                this.state.isSavingEvent = false;
+
+                if (this.state.editingEventId) {
+                    const index = this.state.events.findIndex(e => e.id === this.state.editingEventId);
+                    if (index !== -1) {
+                        this.state.events[index] = newEventData;
+                    }
+                    this.showToast('Event berhasil diperbarui!', 'success');
+                } else {
+                    this.state.events.unshift(newEventData);
+                    this.showToast('Event berhasil ditambahkan!', 'success');
+                }
+                
+                this.state.step = 'admin';
+                this.render();
+            },
+
+            // --- BUYING TICKETS ---
+            selectEvent(eventId) {
+                const event = this.state.events.find(e => e.id === eventId);
+                this.state.selectedEvent = event;
+                this.state.selectedCategory = event.categories[0];
+                this.state.quantity = 1;
+                this.state.step = 'details';
+                this.render();
+            },
+
+            selectCategory(categoryId) {
+                const category = this.state.selectedEvent.categories.find(c => c.id === categoryId);
+                this.state.selectedCategory = category;
+                this.render();
+            },
+
+            changeQuantity(delta) {
+                let newQ = this.state.quantity + delta;
+                if (newQ >= 1 && newQ <= 5) {
+                    this.state.quantity = newQ;
+                    this.render();
+                } else if (newQ > 5) {
+                    this.showToast('Maksimal pembelian adalah 5 tiket per pesanan.', 'error');
+                }
+            },
+
+            proceedToCheckout() {
+                if (!this.state.selectedCategory) {
+                    this.showToast('Silakan pilih kategori tiket terlebih dahulu.', 'error');
+                    return;
+                }
+                
+                if (this.state.isCustomer && this.state.customerProfile) {
+                    this.state.buyerInfo = {
+                        name: this.state.customerProfile.name,
+                        email: this.state.customerProfile.email,
+                        phone: this.state.customerProfile.phone
+                    };
+                } else {
+                    this.state.buyerInfo = { name: '', email: '', phone: '' };
+                }
+                
+                this.state.step = 'checkout';
+                this.render();
+            },
+
+            updateBuyerInfo(field, value) {
+                this.state.buyerInfo[field] = value;
+            },
+
+            updateVerificationMethod(val) {
+                this.state.verificationMethod = val;
+                const lblEmail = document.getElementById('label-verify-email');
+                const lblWa = document.getElementById('label-verify-wa');
+                
+                if (val === 'email') {
+                    lblEmail.classList.add('border-blue-500', 'bg-blue-50');
+                    lblEmail.classList.remove('border-gray-200');
+                    lblWa.classList.remove('border-blue-500', 'bg-blue-50');
+                    lblWa.classList.add('border-gray-200');
+                } else {
+                    lblWa.classList.add('border-blue-500', 'bg-blue-50');
+                    lblWa.classList.remove('border-gray-200');
+                    lblEmail.classList.remove('border-blue-500', 'bg-blue-50');
+                    lblEmail.classList.add('border-gray-200');
+                }
+            },
+
+            proceedToPayment(event) {
+                event.preventDefault();
+                if (!this.state.buyerInfo.name || !this.state.buyerInfo.email || !this.state.buyerInfo.phone) {
+                    this.showToast('Mohon lengkapi semua data diri pemesan.', 'error');
+                    return;
+                }
+                
+                this.state.otpCode = Math.floor(1000 + Math.random() * 9000).toString();
+                const target = this.state.verificationMethod === 'email' ? this.state.buyerInfo.email : this.state.buyerInfo.phone;
+                const viaText = this.state.verificationMethod === 'email' ? 'Email' : 'WhatsApp';
+                
+                this.showToast(`Simulasi OTP: ${this.state.otpCode} (Dikirim via ${viaText} ke ${target})`, 'success');
+                
+                this.state.activeModal = 'otp';
+                this.renderModal();
+            },
+
+            verifyOtp(event) {
+                event.preventDefault();
+                const inputCode = event.target.otp.value;
+                
+                if (inputCode === this.state.otpCode) {
+                    this.closeModal(); 
+                    this.state.otpCode = null;
+                    this.state.step = 'payment';
+                    this.showToast('Verifikasi sukses!', 'success');
+                    this.render();
+                } else {
+                    this.showToast('Kode verifikasi tidak valid. Silakan periksa kembali.', 'error');
+                }
+            },
+
+            selectPaymentMethod(methodId) {
+                this.state.paymentMethod = methodId;
+                this.render();
+            },
+
+            processPayment() {
+                if (!this.state.paymentMethod) {
+                    this.showToast('Pilih metode pembayaran terlebih dahulu.', 'error');
+                    return;
+                }
+                if (this.state.isProcessing) return;
+                
+                this.state.isProcessing = true;
+                this.render(); 
+
+                setTimeout(() => {
+                    this.state.isProcessing = false;
+                    this.state.step = 'waiting_payment';
+                    this.render();
+
+                    setTimeout(() => {
+                        if (this.state.step === 'waiting_payment') {
+                            const newOrder = {
+                                orderId: this.generateOrderId(),
+                                event: this.state.selectedEvent,
+                                category: this.state.selectedCategory,
+                                quantity: this.state.quantity,
+                                buyer: this.state.buyerInfo,
+                                paymentMethod: PAYMENT_METHODS.find(m => m.id === this.state.paymentMethod).name,
+                                purchaseDate: new Date().toLocaleString('id-ID'),
+                                total: this.state.selectedCategory.price * this.state.quantity,
+                                adminFee: 5000
+                            };
+                            
+                            this.state.orderData = newOrder;
+                            this.state.orders.unshift(newOrder); 
+                            
+                            this.showToast('Pembayaran berhasil terdeteksi!', 'success');
+                            this.state.step = 'receipt';
+                            this.render();
+                        }
+                    }, 5000); 
+                }, 1000); 
+            },
+
+            resetApp() {
+                this.state.step = 'home';
+                this.state.selectedEvent = null;
+                this.state.selectedCategory = null;
+                this.state.quantity = 1;
+                this.state.buyerInfo = { name: '', email: '', phone: '' };
+                this.state.verificationMethod = 'email'; 
+                this.state.otpCode = null;
+                this.state.paymentMethod = '';
+                this.state.isProcessing = false;
+                this.state.orderData = null;
+                this.state.limitHome = 3; 
+                this.state.searchHome = '';
+                
+                this.render();
+            },
+
+            printReceipt() {
+                window.print();
+            },
+
+            // --- RENDERING LIST DYNAMICALLY ---
+            renderHomeList() {
+                const container = document.getElementById('home-events-container');
+                const lmContainer = document.getElementById('load-more-home-container');
+                if (!container || !lmContainer) return;
+
+                const filtered = this.state.events.filter(e => 
+                    e.title.toLowerCase().includes(this.state.searchHome) || 
+                    e.location.toLowerCase().includes(this.state.searchHome)
+                );
+
+                let html = '';
+                if (filtered.length === 0) {
+                    container.className = "w-full"; 
+                    html = `<div class="w-full py-12 text-center text-gray-500 bg-white rounded-2xl border border-dashed border-gray-300">Pencarian tidak ditemukan.</div>`;
+                    lmContainer.innerHTML = '';
+                } else {
+                    container.className = "columns-1 sm:columns-2 lg:columns-3 gap-6"; 
+                    const visibleEvents = filtered.slice(0, this.state.limitHome);
+                    
+                    visibleEvents.forEach(event => {
+                        const lowestPrice = event.categories.length > 0 ? Math.min(...event.categories.map(c => c.price)) : 0;
+                        html += `
+                            <div onclick="app.selectEvent('${event.id}')" class="break-inside-avoid mb-6 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer group flex flex-col relative">
+                                <div class="relative overflow-hidden w-full">
+                                    <img src="${event.image}" alt="${event.title}" class="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500" />
+                                    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                                        <h3 class="text-white font-bold text-lg leading-tight drop-shadow-md">${event.title}</h3>
+                                    </div>
+                                </div>
+                                <div class="p-5 flex flex-col flex-grow">
+                                    <div class="flex items-center gap-2 text-gray-600 text-sm mb-2">
+                                        <i data-lucide="calendar" class="w-4 h-4 text-blue-500"></i>
+                                        <span>${event.date} • ${event.time}</span>
+                                    </div>
+                                    <div class="flex items-start gap-2 text-gray-600 text-sm mb-4">
+                                        <i data-lucide="map-pin" class="w-4 h-4 text-red-500 shrink-0 mt-0.5"></i>
+                                        <span class="line-clamp-2">${event.location}</span>
+                                    </div>
+                                    <div class="flex justify-between items-end mt-auto pt-4 border-t border-gray-100">
+                                        <div>
+                                            <p class="text-xs text-gray-500 mb-1">Mulai dari</p>
+                                            <p class="font-bold text-blue-600">${this.formatRupiah(lowestPrice)}</p>
+                                        </div>
+                                        <button class="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg text-sm font-semibold group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                            Beli
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    if (filtered.length > this.state.limitHome) {
+                        lmContainer.innerHTML = `<button type="button" onclick="app.loadMoreHome()" class="mx-auto block bg-white border border-gray-300 text-gray-700 font-semibold py-3 px-8 rounded-xl hover:bg-gray-50 transition shadow-sm">Muat Lebih Banyak</button>`;
+                    } else {
+                        lmContainer.innerHTML = '';
+                    }
+                }
+
+                container.innerHTML = html;
+                lucide.createIcons();
+            },
+
+            renderAdminList() {
+                const container = document.getElementById('admin-events-container');
+                const lmContainer = document.getElementById('load-more-admin-container');
+                if (!container || !lmContainer) return;
+
+                const filtered = this.state.events.filter(e => 
+                    e.title.toLowerCase().includes(this.state.searchAdmin) || 
+                    e.location.toLowerCase().includes(this.state.searchAdmin)
+                );
+
+                let html = '';
+                if (filtered.length === 0) {
+                    html = `<tr><td colspan="4" class="px-6 py-8 text-center text-gray-500 bg-gray-50 rounded-b-xl border-t border-gray-200">Pencarian tidak ditemukan.</td></tr>`;
+                    lmContainer.innerHTML = '';
+                } else {
+                    const visibleEvents = filtered.slice(0, this.state.limitAdmin);
+                    
+                    visibleEvents.forEach(event => {
+                        const lowestPrice = event.categories.length > 0 ? Math.min(...event.categories.map(c => c.price)) : 0;
+                        const totalQuota = event.categories.reduce((acc, curr) => acc + curr.available, 0);
+                        
+                        html += `
+                            <tr class="hover:bg-gray-50 transition border-t border-gray-100">
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <img src="${event.image}" class="w-16 h-12 rounded object-cover border border-gray-200" alt="${event.title}">
+                                        <div>
+                                            <p class="font-bold text-gray-800 line-clamp-1">${event.title}</p>
+                                            <p class="text-xs text-blue-600 font-medium">Mulai ${this.formatRupiah(lowestPrice)}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <p class="font-medium text-gray-800">${event.date}</p>
+                                    <p class="text-xs text-gray-500 line-clamp-1">${event.location}</p>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <p class="font-medium text-gray-800">${event.categories.length} Tipe Kategori</p>
+                                    <p class="text-xs text-gray-500">Total Kuota: ${totalQuota}</p>
+                                </td>
+                                <td class="px-6 py-4 text-center flex justify-center gap-2">
+                                    <button type="button" onclick="app.goEditEvent('${event.id}')" class="text-blue-500 hover:text-blue-700 p-2 hover:bg-blue-50 rounded-lg transition" title="Edit Event">
+                                        <i data-lucide="edit" class="w-5 h-5"></i>
+                                    </button>
+                                    <button type="button" onclick="app.showDeleteModal('${event.id}')" class="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded-lg transition" title="Hapus Event">
+                                        <i data-lucide="trash-2" class="w-5 h-5"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+
+                    if (filtered.length > this.state.limitAdmin) {
+                        lmContainer.innerHTML = `<button type="button" onclick="app.loadMoreAdmin()" class="w-full text-sm bg-gray-50 text-gray-700 font-semibold py-3 px-6 hover:bg-gray-100 transition border-t border-gray-200">Muat Lebih Banyak</button>`;
+                    } else {
+                        lmContainer.innerHTML = '';
+                    }
+                }
+
+                container.innerHTML = html;
+                lucide.createIcons();
+            },
+
+            renderAdminOrders() {
+                const container = document.getElementById('admin-orders-container');
+                const lmContainer = document.getElementById('load-more-orders-container');
+                if (!container || !lmContainer) return;
+
+                const filtered = this.state.orders.filter(o => 
+                    o.orderId.toLowerCase().includes(this.state.searchOrder) || 
+                    o.buyer.name.toLowerCase().includes(this.state.searchOrder) ||
+                    o.buyer.email.toLowerCase().includes(this.state.searchOrder) ||
+                    o.event.title.toLowerCase().includes(this.state.searchOrder)
+                );
+
+                let html = '';
+                if (filtered.length === 0) {
+                    html = `<tr><td colspan="4" class="px-6 py-8 text-center text-gray-500 bg-gray-50 rounded-b-xl border-t border-gray-200">Tidak ada riwayat transaksi yang ditemukan.</td></tr>`;
+                    lmContainer.innerHTML = '';
+                } else {
+                    const visibleOrders = filtered.slice(0, this.state.limitOrder);
+                    
+                    visibleOrders.forEach(order => {
+                        html += `
+                            <tr class="hover:bg-gray-50 transition border-t border-gray-100">
+                                <td class="px-6 py-4">
+                                    <p class="font-bold text-gray-800">${order.orderId}</p>
+                                    <p class="text-xs text-gray-500">${order.purchaseDate}</p>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <p class="font-medium text-gray-800">${order.buyer.name}</p>
+                                    <p class="text-xs text-gray-500">${order.buyer.email}</p>
+                                    <p class="text-xs text-gray-500">${order.buyer.phone}</p>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <p class="font-medium text-gray-800 line-clamp-1">${order.event.title}</p>
+                                    <p class="text-xs text-gray-500">${order.category.name} <span class="font-bold text-gray-700">(${order.quantity} Tiket)</span></p>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <p class="font-bold text-blue-600">${this.formatRupiah(order.total + order.adminFee)}</p>
+                                    <p class="text-xs text-gray-500 px-2 py-0.5 mt-1 bg-green-100 text-green-700 rounded inline-block">Lunas via ${order.paymentMethod}</p>
+                                </td>
+                            </tr>
+                        `;
+                    });
+
+                    if (filtered.length > this.state.limitOrder) {
+                        lmContainer.innerHTML = `<button type="button" onclick="app.loadMoreOrders()" class="w-full text-sm bg-gray-50 text-gray-700 font-semibold py-3 px-6 hover:bg-gray-100 transition border-t border-gray-200">Muat Lebih Banyak</button>`;
+                    } else {
+                        lmContainer.innerHTML = '';
+                    }
+                }
+                
+                container.innerHTML = html;
+            },
+
+            renderToasts() {
+                const container = document.getElementById('toast-container');
+                if (!container) return;
+
+                let html = '';
+                this.state.toasts.forEach(toast => {
+                    const isError = toast.type === 'error';
+                    const bgColor = isError ? 'bg-red-50' : 'bg-green-50';
+                    const borderColor = isError ? 'border-red-200' : 'border-green-200';
+                    const textColor = isError ? 'text-red-800' : 'text-green-800';
+                    const iconColor = isError ? 'text-red-500' : 'text-green-500';
+                    const iconBgColor = isError ? 'bg-red-100' : 'bg-green-100';
+                    const iconName = isError ? 'alert-circle' : 'check-circle';
+
+                    html += `
+                        <div id="toast-${toast.id}" class="pointer-events-auto flex items-center p-4 w-full rounded-2xl border ${bgColor} ${borderColor} shadow-lg animate-toast-in">
+                            <div class="inline-flex flex-shrink-0 justify-center items-center w-10 h-10 rounded-xl ${iconBgColor} ${iconColor}">
+                                <i data-lucide="${iconName}" class="w-5 h-5"></i>
+                            </div>
+                            <div class="ml-3 mr-4 text-sm font-medium ${textColor} leading-relaxed">${toast.message}</div>
+                            <button type="button" onclick="app.removeToast(${toast.id})" class="ml-auto -mx-1.5 -my-1.5 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 inline-flex h-8 w-8 text-gray-500 hover:bg-white/50 transition">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+                lucide.createIcons();
+            },
+
+            // --- RENDERING LOGIC PUSAT ---
+            render() {
+                const container = document.getElementById('app-content');
+                const navActions = document.getElementById('nav-actions');
+                const navAuth = document.getElementById('nav-auth');
+
+                const isPageChange = this.state.step !== this.state.lastStep;
+
+                if (isPageChange) {
+                    container.classList.remove('animate-fade-in', 'animate-slide-in');
+                    void container.offsetWidth; 
+                    
+                    if (['home', 'admin', 'receipt', 'login', 'profile', 'register', 'customer_dashboard'].includes(this.state.step)) {
+                        container.classList.add('animate-fade-in');
+                    } else {
+                        container.classList.add('animate-slide-in');
+                    }
+                }
+
+                // Navbar Back Button
+                const showBack = ['details', 'checkout', 'payment', 'waiting_payment', 'login', 'register', 'adminAddEvent', 'profile', 'customer_dashboard'].includes(this.state.step);
+                if (showBack) {
+                    navActions.innerHTML = `
+                        <button type="button" onclick="app.goBack()" class="flex items-center gap-1 text-sm bg-blue-700 hover:bg-blue-800 px-3 py-1.5 rounded-lg transition">
+                            <i data-lucide="chevron-left" class="w-4 h-4"></i> Kembali
+                        </button>
+                    `;
+                } else {
+                    navActions.innerHTML = '';
+                }
+
+                // Navbar Auth Buttons
+                if (this.state.isAdmin) {
+                    navAuth.innerHTML = `
+                        <button type="button" onclick="app.goProfile()" class="text-sm font-medium text-blue-100 hover:text-white transition flex items-center gap-2 mr-2" title="Profil Saya">
+                            <img src="${this.state.userProfile.photo}" class="w-7 h-7 rounded-full border border-blue-400 object-cover bg-white" alt="Profile">
+                            <span class="hidden sm:inline">${this.state.userProfile.name}</span>
+                        </button>
+                        <button type="button" onclick="app.goAdminDashboard()" class="text-sm font-medium text-blue-100 hover:text-white transition flex items-center gap-1">
+                            <i data-lucide="layout-dashboard" class="w-4 h-4"></i> <span class="hidden sm:inline">Admin</span>
+                        </button>
+                        <button type="button" onclick="app.showLogoutModal()" class="text-sm font-medium text-blue-100 hover:text-white transition flex items-center gap-1">
+                            <i data-lucide="log-out" class="w-4 h-4"></i> <span class="hidden sm:inline">Keluar</span>
+                        </button>
+                    `;
+                } else if (this.state.isCustomer) {
+                    navAuth.innerHTML = `
+                        <button type="button" onclick="app.goCustomerDashboard()" class="text-sm font-medium text-blue-100 hover:text-white transition flex items-center gap-2 mr-3" title="Dashboard">
+                            <div class="w-7 h-7 bg-blue-500 rounded-full flex justify-center items-center font-bold text-xs text-white border border-blue-400">
+                                ${this.state.customerProfile.name.charAt(0).toUpperCase()}
+                            </div>
+                            <span class="hidden sm:inline">${this.state.customerProfile.name.split(' ')[0]}</span>
+                        </button>
+                        <button type="button" onclick="app.goCustomerDashboard()" class="text-sm font-medium text-blue-100 hover:text-white transition flex items-center gap-1 mr-3">
+                            <i data-lucide="ticket" class="w-4 h-4"></i> <span class="hidden sm:inline">Tiket Saya</span>
+                        </button>
+                        <button type="button" onclick="app.showLogoutModal()" class="text-sm font-medium text-blue-100 hover:text-white transition flex items-center gap-1">
+                            <i data-lucide="log-out" class="w-4 h-4"></i> <span class="hidden sm:inline">Keluar</span>
+                        </button>
+                    `;
+                } else {
+                    navAuth.innerHTML = `
+                        <button type="button" onclick="app.goRegister()" class="text-sm font-medium text-blue-100 hover:text-white transition flex items-center gap-1 mr-2">
+                            <i data-lucide="user-plus" class="w-4 h-4"></i> Daftar
+                        </button>
+                        <button type="button" onclick="app.goLogin()" class="flex items-center gap-1 text-sm bg-blue-700 hover:bg-blue-800 px-3 py-1.5 rounded-lg transition">
+                            <i data-lucide="log-in" class="w-4 h-4"></i> Masuk
+                        </button>
+                    `;
+                }
+
+                // Render Shell Views
+                switch(this.state.step) {
+                    case 'home': container.innerHTML = this.getViewHomeShell(); break;
+                    case 'details': container.innerHTML = this.getViewDetails(); break;
+                    case 'checkout': container.innerHTML = this.getViewCheckout(); break;
+                    case 'payment': container.innerHTML = this.getViewPayment(); break;
+                    case 'waiting_payment': container.innerHTML = this.getViewWaitingPayment(); break;
+                    case 'receipt': container.innerHTML = this.getViewReceipt(); break;
+                    case 'login': container.innerHTML = this.getViewLogin(); break;
+                    case 'register': container.innerHTML = this.getViewRegister(); break;
+                    case 'admin': container.innerHTML = this.getViewAdminShell(); break;
+                    case 'adminAddEvent': container.innerHTML = this.getViewAddEvent(); break;
+                    case 'profile': container.innerHTML = this.getViewProfile(); break;
+                    case 'customer_dashboard': container.innerHTML = this.getViewCustomerDashboard(); break;
+                }
+
+                if (isPageChange) {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    this.state.lastStep = this.state.step;
+                }
+
+                if (this.state.step === 'home') this.renderHomeList();
+                if (this.state.step === 'admin') {
+                    if (this.state.adminActiveTab === 'events') {
+                        this.renderAdminList();
+                    } else if (this.state.adminActiveTab === 'orders') {
+                        this.renderAdminOrders(); 
+                    }
+                }
+
+                lucide.createIcons();
+            },
+
+            renderModal() {
+                const container = document.getElementById('modal-container');
+                if (!this.state.activeModal) {
+                    container.innerHTML = '';
+                    return;
+                }
+
+                let modalHtml = '';
+
+                if (this.state.activeModal === 'logout') {
+                    modalHtml = `
+                        <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+                            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-slide-in transform transition-all">
+                                <div class="p-6 text-center">
+                                    <div class="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <i data-lucide="log-out" class="w-8 h-8"></i>
+                                    </div>
+                                    <h3 class="text-xl font-bold text-gray-800 mb-2">Konfirmasi Keluar</h3>
+                                    <p class="text-gray-500 text-sm">Apakah Anda yakin ingin keluar dari akun Anda?</p>
+                                </div>
+                                <div class="flex border-t border-gray-100 bg-gray-50">
+                                    <button type="button" onclick="app.closeModal()" class="flex-1 py-4 text-gray-600 font-semibold hover:bg-gray-100 transition">Batal</button>
+                                    <button type="button" onclick="app.confirmLogout()" class="flex-1 py-4 text-red-600 font-bold hover:bg-red-50 transition border-l border-gray-200">Ya, Keluar</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else if (this.state.activeModal === 'delete') {
+                    const event = this.state.events.find(e => e.id === this.state.itemToDelete);
+                    if (event) {
+                        modalHtml = `
+                            <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+                                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-slide-in transform transition-all">
+                                    <div class="p-6 text-center">
+                                        <div class="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <i data-lucide="alert-triangle" class="w-8 h-8"></i>
+                                        </div>
+                                        <h3 class="text-xl font-bold text-gray-800 mb-2">Hapus Event?</h3>
+                                        <p class="text-gray-500 text-sm">Anda akan menghapus event <br/><span class="font-bold text-gray-800">"${event.title}"</span>.</p>
+                                        <p class="text-red-500 text-xs mt-3 bg-red-50 py-2 rounded-lg font-medium">Tindakan ini tidak dapat dibatalkan!</p>
+                                    </div>
+                                    <div class="flex border-t border-gray-100">
+                                        <button type="button" onclick="app.closeModal()" class="flex-1 py-4 text-gray-600 font-semibold bg-gray-50 hover:bg-gray-100 transition">Batal</button>
+                                        <button type="button" onclick="app.confirmDelete()" class="flex-1 py-4 text-white bg-red-600 font-bold hover:bg-red-700 transition">Ya, Hapus</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                } else if (this.state.activeModal === 'otp') {
+                    const target = this.state.verificationMethod === 'email' ? this.state.buyerInfo.email : this.state.buyerInfo.phone;
+                    const viaText = this.state.verificationMethod === 'email' ? 'Email' : 'WhatsApp';
+                    
+                    modalHtml = `
+                        <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+                            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-slide-in transform transition-all">
+                                <div class="p-6 text-center">
+                                    <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <i data-lucide="shield-check" class="w-8 h-8"></i>
+                                    </div>
+                                    <h3 class="text-xl font-bold text-gray-800 mb-2">Verifikasi OTP</h3>
+                                    <p class="text-gray-500 text-sm mb-6">Masukkan 4 digit kode yang telah dikirimkan via ${viaText} ke <br/><span class="font-bold text-gray-800">${target}</span></p>
+                                    
+                                    <form onsubmit="app.verifyOtp(event); return false;">
+                                        <input type="text" name="otp" required autocomplete="off" maxlength="4"
+                                            class="w-full text-center text-3xl font-mono tracking-[0.5em] p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition mb-6"
+                                            placeholder="••••" />
+                                        <div class="flex gap-3">
+                                            <button type="button" onclick="app.closeModal()" class="flex-1 py-3 text-gray-600 font-semibold bg-gray-50 hover:bg-gray-100 rounded-xl transition border border-gray-200">Kembali</button>
+                                            <button type="submit" class="flex-1 py-3 text-white bg-blue-600 font-bold hover:bg-blue-700 rounded-xl transition shadow-md shadow-blue-200">Verifikasi</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                container.innerHTML = modalHtml;
+                lucide.createIcons();
+            },
+
+            // --- HTML TEMPLATE SHELLS ---
+
+            getViewHomeShell() {
+                return `
+                    <div class="max-w-6xl mx-auto px-4 py-8">
+                        <div class="flex flex-col md:flex-row justify-between md:items-end mb-8 gap-4">
+                            <div>
+                                <h1 class="text-3xl font-bold text-gray-800 mb-2">Temukan Event Menarik!</h1>
+                                <p class="text-gray-600">Beli tiket konser, olahraga, dan hiburan lainnya dengan mudah.</p>
+                            </div>
+                            <div class="relative w-full md:w-72">
+                                <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
+                                <input type="text" placeholder="Cari event atau lokasi..." 
+                                    oninput="app.updateSearchHome(this.value)" 
+                                    value="${this.state.searchHome}" 
+                                    class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white" />
+                            </div>
+                        </div>
+                        
+                        <div id="home-events-container" class="columns-1 sm:columns-2 lg:columns-3 gap-6"></div>
+                        <div id="load-more-home-container" class="mt-8"></div>
+                    </div>
+                `;
+            },
+
+            getViewAdminShell() {
+                const isEvents = this.state.adminActiveTab === 'events';
+                let contentHtml = '';
+                
+                if (isEvents) {
+                    contentHtml = `
+                        <div class="animate-fade-in">
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                                <div>
+                                    <h2 class="text-2xl font-bold text-gray-800 mb-1">Manajemen Event</h2>
+                                    <p class="text-gray-600 text-sm">Kelola daftar event yang akan dijual tiketnya.</p>
+                                </div>
+                                <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                                    <div class="relative w-full sm:w-64">
+                                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                                        <input type="text" placeholder="Cari event..." 
+                                            oninput="app.updateSearchAdmin(this.value)" 
+                                            value="${this.state.searchAdmin}" 
+                                            class="w-full pl-9 pr-4 py-2 border border-gray-200 shadow-sm rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition text-sm">
+                                    </div>
+                                    <button type="button" onclick="app.goAddEvent()" class="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-xl font-semibold transition shadow-sm whitespace-nowrap text-sm">
+                                        <i data-lucide="plus" class="w-4 h-4"></i> Tambah Event
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-12">
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left text-sm text-gray-600">
+                                        <thead class="bg-gray-50 text-gray-700 font-medium">
+                                            <tr>
+                                                <th class="px-6 py-4">Event</th>
+                                                <th class="px-6 py-4">Waktu & Lokasi</th>
+                                                <th class="px-6 py-4">Kategori Tiket</th>
+                                                <th class="px-6 py-4 text-center">Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="admin-events-container"></tbody>
+                                    </table>
+                                </div>
+                                <div id="load-more-admin-container"></div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    contentHtml = `
+                        <div class="animate-fade-in">
+                            <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                <div>
+                                    <h2 class="text-2xl font-bold text-gray-800 mb-1">Riwayat Transaksi</h2>
+                                    <p class="text-gray-600 text-sm">Daftar pembelian tiket yang telah berhasil dibayar.</p>
+                                </div>
+                                <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                                    <div class="relative w-full sm:w-64">
+                                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                                        <input type="text" placeholder="Cari order ID atau nama..." 
+                                            oninput="app.updateSearchOrder(this.value)" 
+                                            value="${this.state.searchOrder}" 
+                                            class="w-full pl-9 pr-4 py-2 border border-gray-200 shadow-sm rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition text-sm">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left text-sm text-gray-600">
+                                        <thead class="bg-gray-50 text-gray-700 font-medium">
+                                            <tr>
+                                                <th class="px-6 py-4">Order ID & Tanggal</th>
+                                                <th class="px-6 py-4">Data Pemesan</th>
+                                                <th class="px-6 py-4">Detail Event & Tiket</th>
+                                                <th class="px-6 py-4">Total & Pembayaran</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="admin-orders-container"></tbody>
+                                    </table>
+                                </div>
+                                <div id="load-more-orders-container"></div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="max-w-6xl mx-auto px-4 py-8">
+                        <div class="mb-8 border-b border-gray-200">
+                            <nav class="flex space-x-8" aria-label="Tabs">
+                                <button type="button" onclick="app.switchAdminTab('events')" class="${isEvents ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors">
+                                    <i data-lucide="calendar" class="w-5 h-5"></i> Manajemen Event
+                                </button>
+                                <button type="button" onclick="app.switchAdminTab('orders')" class="${!isEvents ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors">
+                                    <i data-lucide="receipt" class="w-5 h-5"></i> Riwayat Transaksi
+                                </button>
+                            </nav>
+                        </div>
+                        ${contentHtml}
+                    </div>
+                `;
+            },
+
+            // --- HTML TEMPLATE PAGES ---
+
+            getViewProfile() {
+                return `
+                    <div class="max-w-2xl mx-auto px-4 py-8">
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+                            <div class="mb-6 pb-6 border-b border-gray-100 flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
+                                <div class="relative shrink-0">
+                                    <img src="${this.state.userProfile.photo}" class="w-24 h-24 rounded-full object-cover border-4 border-blue-50 shadow-sm" alt="Profile">
+                                    <div class="absolute bottom-1 right-1 bg-blue-600 text-white p-1.5 rounded-full border-2 border-white">
+                                        <i data-lucide="camera" class="w-4 h-4"></i>
+                                    </div>
+                                </div>
+                                <div class="mt-2 sm:mt-4">
+                                    <h2 class="text-2xl font-bold text-gray-800">Profil Administrator</h2>
+                                    <p class="text-gray-500 mt-1">Kelola informasi data diri dan keamanan akun Anda.</p>
+                                </div>
+                            </div>
+                            
+                            <form onsubmit="app.saveProfile(event); return false;" class="space-y-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
+                                    <div class="relative">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <i data-lucide="user" class="h-5 w-5 text-gray-400"></i>
+                                        </div>
+                                        <input type="text" name="name" required value="${this.state.userProfile.name}"
+                                            class="pl-10 w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Unggah Foto Profil</label>
+                                    <input type="file" name="photo" accept="image/*"
+                                        class="w-full p-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer" />
+                                    <p class="text-xs text-gray-500 mt-1">Kosongkan jika tidak ingin mengubah foto profil saat ini.</p>
+                                </div>
+
+                                <hr class="border-gray-100">
+
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                        <i data-lucide="lock" class="w-5 h-5 text-blue-500"></i> Keamanan Akun
+                                    </h3>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Password Baru</label>
+                                        <div class="relative">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <i data-lucide="key" class="h-5 w-5 text-gray-400"></i>
+                                            </div>
+                                            <input type="password" name="password" 
+                                                class="pl-10 w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                                                placeholder="Kosongkan jika tidak ingin mengubah password" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="pt-4">
+                                    <button type="submit" ${this.state.isSavingProfile ? 'disabled' : ''} class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
+                                        ${this.state.isSavingProfile ? '<div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Menyimpan...' : 'Simpan Perubahan'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                `;
+            },
+
+            getViewLogin() {
+                return `
+                    <div class="max-w-md mx-auto px-4 py-16">
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+                            <div class="text-center mb-6">
+                                <div class="inline-flex bg-blue-50 p-3 rounded-full mb-3">
+                                    <i data-lucide="log-in" class="w-8 h-8 text-blue-600"></i>
+                                </div>
+                                <h2 class="text-2xl font-bold text-gray-800">Masuk Akun</h2>
+                                <p class="text-gray-500 text-sm mt-1">Gunakan Email (Customer) atau Username (Admin)</p>
+                            </div>
+                            
+                            <form onsubmit="app.handleLogin(event); return false;" class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Email / Username</label>
+                                    <input type="text" name="username" required
+                                        class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                                        placeholder="Masukkan identitas Anda" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                                    <div class="relative">
+                                        <input type="password" id="login-password" name="password" required
+                                            class="w-full p-3 pr-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                                            placeholder="••••••••" />
+                                        <button type="button" id="toggle-password-btn" onclick="window.togglePassword('login-password', 'toggle-password-btn')" class="absolute inset-y-0 right-0 pr-3 flex items-center hover:opacity-80">
+                                            <i data-lucide="eye" class="w-5 h-5 text-gray-400"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Verifikasi Keamanan</label>
+                                    <div class="flex gap-3">
+                                        <div onclick="app.refreshCaptcha()" title="Klik untuk mengganti kode" 
+                                             class="shrink-0 w-1/3 min-w-[120px] cursor-pointer bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center select-none font-mono text-xl tracking-wider text-slate-700 font-bold relative overflow-hidden group" 
+                                             style="background-image: url('data:image/svg+xml;utf8,<svg width=\\'100%\\' height=\\'100%\\' xmlns=\\'http://www.w3.org/2000/svg\\'><line x1=\\'5%\\' y1=\\'30%\\' x2=\\'95%\\' y2=\\'70%\\' stroke=\\'%23CBD5E1\\' stroke-width=\\'1.5\\'/><line x1=\\'10%\\' y1=\\'80%\\' x2=\\'90%\\' y2=\\'20%\\' stroke=\\'%23CBD5E1\\' stroke-width=\\'1.5\\'/><line x1=\\'0%\\' y1=\\'50%\\' x2=\\'100%\\' y2=\\'45%\\' stroke=\\'%23CBD5E1\\' stroke-width=\\'1.5\\'/></svg>');">
+                                            <span class="z-10 bg-white/50 px-2 py-0.5 rounded backdrop-blur-[1px] group-hover:scale-105 transition-transform duration-200">${this.state.captchaText}</span>
+                                        </div>
+                                        <input type="text" name="captcha" required autocomplete="off"
+                                            class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                                            placeholder="Masukkan kode di kiri" />
+                                    </div>
+                                    <p class="text-xs text-gray-400 mt-1">Klik pada gambar kode jika tidak terbaca.</p>
+                                </div>
+
+                                <button type="submit" ${this.state.isLoggingIn ? 'disabled' : ''} class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition mt-4 flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
+                                    ${this.state.isLoggingIn ? '<div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Memproses...' : 'Masuk'}
+                                </button>
+
+                                <p class="text-center text-sm text-gray-500 mt-4 border-t pt-4">
+                                    Belum punya akun Customer? <button type="button" onclick="app.goRegister()" class="text-blue-600 font-semibold hover:underline">Daftar sekarang</button>
+                                </p>
+                            </form>
+                        </div>
+                    </div>
+                `;
+            },
+
+            getViewRegister() {
+                return `
+                    <div class="max-w-md mx-auto px-4 py-16">
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+                            <div class="text-center mb-6">
+                                <div class="inline-flex bg-green-50 p-3 rounded-full mb-3">
+                                    <i data-lucide="user-plus" class="w-8 h-8 text-green-600"></i>
+                                </div>
+                                <h2 class="text-2xl font-bold text-gray-800">Daftar Akun</h2>
+                                <p class="text-gray-500 text-sm mt-1">Buat akun agar pembelian tiket lebih mudah</p>
+                            </div>
+                            
+                            <form onsubmit="app.handleRegister(event); return false;" class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
+                                    <input type="text" name="name" required
+                                        class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                                        placeholder="Contoh: Budi Santoso" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Alamat Email</label>
+                                    <input type="email" name="email" required
+                                        class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                                        placeholder="budi@email.com" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nomor WhatsApp</label>
+                                    <input type="tel" name="phone" required
+                                        class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                                        placeholder="081234567890" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                                    <div class="relative">
+                                        <input type="password" id="register-password" name="password" required
+                                            class="w-full p-3 pr-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                                            placeholder="••••••••" />
+                                        <button type="button" id="toggle-reg-pass-btn" onclick="window.togglePassword('register-password', 'toggle-reg-pass-btn')" class="absolute inset-y-0 right-0 pr-3 flex items-center hover:opacity-80">
+                                            <i data-lucide="eye" class="w-5 h-5 text-gray-400"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Konfirmasi Password</label>
+                                    <div class="relative">
+                                        <input type="password" id="register-confirm-password" name="confirm_password" required
+                                            class="w-full p-3 pr-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                                            placeholder="••••••••" />
+                                        <button type="button" id="toggle-reg-conf-pass-btn" onclick="window.togglePassword('register-confirm-password', 'toggle-reg-conf-pass-btn')" class="absolute inset-y-0 right-0 pr-3 flex items-center hover:opacity-80">
+                                            <i data-lucide="eye" class="w-5 h-5 text-gray-400"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <button type="submit" ${this.state.isLoggingIn ? 'disabled' : ''} class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition mt-6 flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
+                                    ${this.state.isLoggingIn ? '<div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Memproses...' : 'Daftar Sekarang'}
+                                </button>
+                                <p class="text-center text-sm text-gray-500 mt-4">
+                                    Sudah punya akun? <button type="button" onclick="app.goLogin()" class="text-blue-600 font-semibold hover:underline">Masuk di sini</button>
+                                </p>
+                            </form>
+                        </div>
+                    </div>
+                `;
+            },
+
+            getViewCustomerDashboard() {
+                const myOrders = this.state.orders.filter(o => o.buyer.email === this.state.customerProfile.email);
+                let ticketsHtml = '';
+
+                if (myOrders.length === 0) {
+                    ticketsHtml = `
+                        <div class="bg-white rounded-2xl shadow-sm border border-dashed border-gray-300 p-12 text-center">
+                            <div class="inline-flex bg-gray-50 p-4 rounded-full mb-4">
+                                <i data-lucide="ticket" class="w-12 h-12 text-gray-400"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-800 mb-2">Belum ada tiket</h3>
+                            <p class="text-gray-500 mb-6">Anda belum melakukan pembelian tiket apapun.</p>
+                            <button type="button" onclick="app.goHome()" class="bg-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-blue-700 transition">
+                                Cari Event Sekarang
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    myOrders.forEach(order => {
+                        ticketsHtml += `
+                            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-4 flex flex-col md:flex-row relative">
+                                <div class="hidden md:block absolute left-[30%] -top-3 w-6 h-6 bg-gray-50 rounded-full border-b border-gray-100"></div>
+                                <div class="hidden md:block absolute left-[30%] -bottom-3 w-6 h-6 bg-gray-50 rounded-full border-t border-gray-100"></div>
+
+                                <div class="p-6 md:w-[30%] bg-blue-50 border-b md:border-b-0 md:border-r border-dashed border-gray-300 flex flex-col justify-center text-center">
+                                    <p class="text-xs text-blue-500 font-bold uppercase tracking-widest mb-1">Booking ID</p>
+                                    <p class="text-lg font-mono font-bold text-gray-800 bg-white inline-block px-3 py-1 rounded mx-auto mb-3 shadow-sm">${order.orderId}</p>
+                                    <div class="bg-white p-2 rounded-lg inline-block mx-auto mb-2">
+                                        <i data-lucide="qr-code" class="w-16 h-16 text-gray-800" stroke-width="1"></i>
+                                    </div>
+                                    <p class="text-xs text-gray-500">Tunjukkan QR saat entry</p>
+                                </div>
+
+                                <div class="p-6 md:w-[70%] flex flex-col justify-between">
+                                    <div>
+                                        <div class="flex justify-between items-start mb-2">
+                                            <h3 class="text-xl font-bold text-gray-800">${order.event.title}</h3>
+                                            <span class="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded">PAID</span>
+                                        </div>
+                                        <div class="text-sm text-gray-600 space-y-1 mb-4">
+                                            <p class="flex items-center gap-2"><i data-lucide="calendar" class="w-4 h-4 text-blue-500"></i> ${order.event.date} • ${order.event.time}</p>
+                                            <p class="flex items-center gap-2"><i data-lucide="map-pin" class="w-4 h-4 text-red-500"></i> ${order.event.location}</p>
+                                        </div>
+                                    </div>
+                                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 flex justify-between items-center">
+                                        <div>
+                                            <p class="text-xs text-gray-500">Kategori Tiket</p>
+                                            <p class="font-bold text-gray-800">${order.category.name}</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-xs text-gray-500">Jumlah</p>
+                                            <p class="font-bold text-gray-800">${order.quantity} Orang</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+
+                return `
+                    <div class="max-w-4xl mx-auto px-4 py-8">
+                        <div class="mb-8">
+                            <h1 class="text-3xl font-bold text-gray-800 mb-2">Dashboard Customer</h1>
+                            <p class="text-gray-600">Selamat datang, <span class="font-semibold">${this.state.customerProfile.name}</span>. Berikut adalah riwayat tiket Anda.</p>
+                        </div>
+
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                <i data-lucide="ticket" class="w-5 h-5 text-blue-600"></i> Tiket Saya
+                            </h2>
+                            ${ticketsHtml}
+                        </div>
+                    </div>
+                `;
+            },
+
+            getViewAddEvent() {
+                const isEdit = !!this.state.editingEventId;
+                const editEvent = isEdit ? this.state.events.find(e => e.id === this.state.editingEventId) : null;
+                const pageTitle = isEdit ? 'Edit Event' : 'Tambah Event Baru';
+                const submitText = isEdit ? 'Simpan Perubahan' : 'Simpan & Terbitkan Event';
+
+                let categoriesHtml = '';
+                if (isEdit && editEvent.categories.length > 0) {
+                    editEvent.categories.forEach(cat => {
+                        categoriesHtml += `
+                            <div class="flex flex-col md:flex-row gap-3 category-row bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                <input type="text" placeholder="Nama Kategori (mis: Reguler)" value="${cat.name}" class="cat-name p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none flex-1" required>
+                                <input type="number" placeholder="Harga (Rp)" value="${cat.price}" class="cat-price p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none w-full md:w-1/3" required min="0">
+                                <input type="number" placeholder="Kuota" value="${cat.available}" class="cat-quota p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none w-full md:w-1/4" required min="1">
+                                <button type="button" onclick="this.parentElement.remove()" class="bg-red-100 text-red-600 hover:bg-red-200 px-4 rounded-xl font-bold transition">X</button>
+                            </div>
+                        `;
+                    });
+                } else {
+                    categoriesHtml = `
+                        <div class="flex flex-col md:flex-row gap-3 category-row bg-gray-50 p-3 rounded-lg border border-gray-200">
+                            <input type="text" placeholder="Nama Kategori (mis: Reguler)" class="cat-name p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none flex-1" required>
+                            <input type="number" placeholder="Harga (Rp)" class="cat-price p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none w-full md:w-1/3" required min="0">
+                            <input type="number" placeholder="Kuota" class="cat-quota p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none w-full md:w-1/4" required min="1">
+                            <button type="button" onclick="this.parentElement.remove()" class="bg-red-100 text-red-600 hover:bg-red-200 px-4 rounded-xl font-bold transition">X</button>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="max-w-4xl mx-auto px-4 py-8">
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+                            <div class="mb-6 pb-6 border-b border-gray-100">
+                                <h2 class="text-2xl font-bold text-gray-800">${pageTitle}</h2>
+                                <p class="text-gray-500 mt-1">Lengkapi informasi di bawah ini untuk menerbitkan event tiket.</p>
+                            </div>
+                            
+                            <form onsubmit="app.submitNewEvent(event); return false;" class="space-y-6">
+                                
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2"><i data-lucide="info" class="w-5 h-5 text-blue-500"></i> Informasi Event</h3>
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Nama Event</label>
+                                            <input type="text" name="title" required value="${isEdit ? editEvent.title : ''}"
+                                                class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                                                placeholder="Contoh: Konser Kemerdekaan 2026" />
+                                        </div>
+                                        
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal</label>
+                                                <input type="text" name="date" required value="${isEdit ? editEvent.date : ''}"
+                                                    class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                                                    placeholder="Contoh: 17 Agustus 2026" />
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">Waktu</label>
+                                                <input type="text" name="time" required value="${isEdit ? editEvent.time : ''}"
+                                                    class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                                                    placeholder="Contoh: 19:00 WIB" />
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Lokasi</label>
+                                            <input type="text" name="location" required value="${isEdit ? editEvent.location : ''}"
+                                                class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                                                placeholder="Contoh: Stadion Utama, Jakarta" />
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Upload Gambar Poster ${isEdit ? '(Opsional)' : ''}</label>
+                                            <input type="file" name="image" accept="image/*"
+                                                class="w-full p-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer" />
+                                            ${isEdit ? `
+                                            <div class="mt-3 p-3 bg-gray-50 rounded-xl border border-gray-200 inline-block">
+                                                <span class="text-xs text-gray-500 block mb-2">Gambar saat ini:</span>
+                                                <img src="${editEvent.image}" class="h-24 rounded object-cover shadow-sm border border-gray-300">
+                                            </div>` : '<p class="text-xs text-gray-400 mt-1">Kosongkan untuk menggunakan gambar default.</p>'}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <hr class="border-gray-100">
+
+                                <div>
+                                    <div class="flex justify-between items-center mb-4">
+                                        <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-2"><i data-lucide="tickets" class="w-5 h-5 text-blue-500"></i> Kategori & Harga Tiket</h3>
+                                        <button type="button" onclick="window.addCatRow()" class="text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 font-medium px-3 py-1.5 rounded-lg transition">
+                                            + Tambah Baris
+                                        </button>
+                                    </div>
+                                    
+                                    <div id="categories-container" class="space-y-3">
+                                        ${categoriesHtml}
+                                    </div>
+                                </div>
+
+                                <div class="pt-6">
+                                    <button type="submit" ${this.state.isSavingEvent ? 'disabled' : ''} class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
+                                        ${this.state.isSavingEvent ? '<div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Menyimpan Event...' : submitText}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                `;
+            },
+
+            getViewDetails() {
+                const event = this.state.selectedEvent;
+                const totalHarga = (this.state.selectedCategory ? this.state.selectedCategory.price : 0) * this.state.quantity;
+                const isBtnDisabled = !this.state.selectedCategory ? 'disabled class="opacity-50 cursor-not-allowed"' : '';
+
+                let html = `
+                    <div class="max-w-4xl mx-auto px-4 py-8">
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col md:flex-row">
+                            <div class="md:w-1/2">
+                                <img src="${event.image}" alt="${event.title}" class="w-full h-64 md:h-full object-cover" />
+                            </div>
+                            <div class="p-6 md:w-1/2 flex flex-col">
+                                <h2 class="text-2xl font-bold text-gray-800 mb-4">${event.title}</h2>
+                                
+                                <div class="space-y-3 mb-6">
+                                    <div class="flex items-center gap-3 text-gray-600">
+                                        <div class="bg-blue-50 p-2 rounded-lg"><i data-lucide="calendar" class="w-5 h-5 text-blue-600"></i></div>
+                                        <div>
+                                            <p class="font-medium text-gray-800">${event.date}</p>
+                                            <p class="text-sm">${event.time}</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3 text-gray-600">
+                                        <div class="bg-red-50 p-2 rounded-lg"><i data-lucide="map-pin" class="w-5 h-5 text-red-600"></i></div>
+                                        <div>
+                                            <p class="font-medium text-gray-800">${event.location}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <hr class="mb-6 border-gray-100" />
+                                <h3 class="font-semibold text-gray-800 mb-3">Pilih Kategori Tiket</h3>
+                                <div class="space-y-3 mb-6">
+                `;
+
+                if (event.categories.length === 0) {
+                     html += `<p class="text-red-500 text-sm">Maaf, kategori tiket belum diatur untuk event ini.</p>`;
+                } else {
+                    event.categories.forEach(cat => {
+                        const isSelected = this.state.selectedCategory && this.state.selectedCategory.id === cat.id;
+                        const borderClass = isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-200';
+                        
+                        html += `
+                            <label class="flex items-center justify-between p-3 rounded-xl border-2 cursor-pointer transition-all ${borderClass}">
+                                <div class="flex items-center gap-3">
+                                    <input type="radio" name="category" class="w-4 h-4 text-blue-600" 
+                                        ${isSelected ? 'checked' : ''} 
+                                        onchange="app.selectCategory('${cat.id}')" />
+                                    <div>
+                                        <p class="font-semibold text-gray-800">${cat.name}</p>
+                                        <p class="text-xs text-gray-500">Tersisa: ${cat.available} tiket</p>
+                                    </div>
+                                </div>
+                                <p class="font-bold text-blue-600">${this.formatRupiah(cat.price)}</p>
+                            </label>
+                        `;
+                    });
+                }
+
+                html += `
+                                </div>
+                                    <div class="flex items-center justify-between mb-8 bg-gray-50 p-4 rounded-xl">
+                                    <span class="font-semibold text-gray-700">Jumlah Tiket</span>
+                                    <div class="flex items-center gap-4">
+                                        <button type="button" onclick="app.changeQuantity(-1)" class="w-8 h-8 rounded-full bg-white border border-gray-300 flex items-center justify-center hover:bg-gray-100 font-bold">-</button>
+                                        <span class="w-4 text-center font-bold">${this.state.quantity}</span>
+                                        <button type="button" onclick="app.changeQuantity(1)" class="w-8 h-8 rounded-full bg-white border border-gray-300 flex items-center justify-center hover:bg-gray-100 font-bold">+</button>
+                                    </div>
+                                </div>
+
+                                <div class="mt-auto">
+                                    <div class="flex justify-between items-center mb-4">
+                                        <span class="text-gray-600">Total Harga</span>
+                                        <span class="text-2xl font-bold text-gray-800">${this.formatRupiah(totalHarga)}</span>
+                                    </div>
+                                    <button type="button" onclick="app.proceedToCheckout()" ${isBtnDisabled} class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition ${isBtnDisabled}">
+                                        Lanjut Isi Data Diri
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return html;
+            },
+
+            getViewCheckout() {
+                const subtotal = this.state.selectedCategory.price * this.state.quantity;
+                return `
+                    <div class="max-w-3xl mx-auto px-4 py-8">
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                                <i data-lucide="users" class="w-6 h-6 text-blue-600"></i> Detail Pemesan
+                            </h2>
+                            
+                            <form onsubmit="app.proceedToPayment(event); return false;" class="space-y-5">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap (Sesuai KTP)</label>
+                                    <div class="relative">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <i data-lucide="user" class="h-5 w-5 text-gray-400"></i>
+                                        </div>
+                                        <input type="text" required
+                                            value="${this.state.buyerInfo.name}"
+                                            oninput="app.updateBuyerInfo('name', this.value)"
+                                            class="pl-10 w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                                            placeholder="Misal: Budi Santoso" />
+                                    </div>
+                                </div>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Alamat Email</label>
+                                        <div class="relative">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <i data-lucide="mail" class="h-5 w-5 text-gray-400"></i>
+                                            </div>
+                                            <input type="email" required
+                                                value="${this.state.buyerInfo.email}"
+                                                oninput="app.updateBuyerInfo('email', this.value)"
+                                                class="pl-10 w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                                                placeholder="budi@email.com" />
+                                        </div>
+                                        <p class="text-xs text-gray-500 mt-1">E-tiket akan dikirimkan ke email ini.</p>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Nomor WhatsApp</label>
+                                        <div class="relative">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <i data-lucide="smartphone" class="h-5 w-5 text-gray-400"></i>
+                                            </div>
+                                            <input type="tel" required
+                                                value="${this.state.buyerInfo.phone}"
+                                                oninput="app.updateBuyerInfo('phone', this.value)"
+                                                class="pl-10 w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                                                placeholder="081234567890" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-8 bg-blue-50 p-4 rounded-xl border border-blue-100">
+                                    <h3 class="font-semibold text-blue-800 mb-2">Ringkasan Pesanan</h3>
+                                    <div class="flex justify-between text-sm text-blue-900 mb-1">
+                                        <span>${this.state.selectedEvent.title}</span>
+                                        <span>${this.state.quantity}x</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm text-blue-900 mb-3">
+                                        <span>Kategori: ${this.state.selectedCategory.name}</span>
+                                        <span>${this.formatRupiah(subtotal)}</span>
+                                    </div>
+                                    <div class="border-t border-blue-200 pt-2 flex justify-between font-bold text-blue-900">
+                                        <span>Total</span>
+                                        <span>${this.formatRupiah(subtotal)}</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Opsi Verifikasi & Pengiriman -->
+                                <div class="mt-8 border-t border-gray-100 pt-6">
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                        <i data-lucide="shield-check" class="w-5 h-5 text-blue-600"></i> Pengiriman & Verifikasi
+                                    </h3>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <label id="label-verify-email" class="flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${this.state.verificationMethod === 'email' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}">
+                                            <input type="radio" name="verification" value="email" 
+                                                ${this.state.verificationMethod === 'email' ? 'checked' : ''}
+                                                onchange="app.updateVerificationMethod(this.value)"
+                                                class="w-4 h-4 text-blue-600 mt-1" />
+                                            <div class="flex flex-col">
+                                                <span class="font-medium text-gray-800 flex items-center gap-2"><i data-lucide="mail" class="w-4 h-4 text-gray-500"></i> Email</span>
+                                                <span class="text-xs text-gray-500 mt-1">E-tiket & OTP dikirim via Email</span>
+                                            </div>
+                                        </label>
+                                        <label id="label-verify-wa" class="flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${this.state.verificationMethod === 'wa' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}">
+                                            <input type="radio" name="verification" value="wa" 
+                                                ${this.state.verificationMethod === 'wa' ? 'checked' : ''}
+                                                onchange="app.updateVerificationMethod(this.value)"
+                                                class="w-4 h-4 text-blue-600 mt-1" />
+                                            <div class="flex flex-col">
+                                                <span class="font-medium text-gray-800 flex items-center gap-2"><i data-lucide="message-circle" class="w-4 h-4 text-gray-500"></i> WhatsApp</span>
+                                                <span class="text-xs text-gray-500 mt-1">E-tiket & OTP dikirim via WA</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition mt-6">
+                                    Lanjut ke Pembayaran
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                `;
+            },
+
+            getViewPayment() {
+                const subtotal = this.state.selectedCategory.price * this.state.quantity;
+                const adminFee = 5000;
+                const total = subtotal + adminFee;
+                
+                let isBtnDisabled = (!this.state.paymentMethod || this.state.isProcessing) ? 'disabled class="opacity-70 cursor-not-allowed"' : '';
+                
+                let btnContent = 'Bayar Sekarang';
+                if (this.state.isProcessing) {
+                    btnContent = `<div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Memproses...`;
+                }
+
+                let html = `
+                    <div class="max-w-4xl mx-auto px-4 py-8">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            
+                            <!-- Left: Payment Methods -->
+                            <div class="md:col-span-2 space-y-4">
+                                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                                    <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                        <i data-lucide="credit-card" class="w-6 h-6 text-blue-600"></i> Pilih Metode Pembayaran
+                                    </h2>
+                                    <div class="space-y-3">
+                `;
+
+                PAYMENT_METHODS.forEach(method => {
+                    const isSelected = this.state.paymentMethod === method.id;
+                    const borderClass = isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-200';
+                    html += `
+                        <label class="flex items-center p-4 rounded-xl border-2 cursor-pointer transition-all ${borderClass}">
+                            <input type="radio" name="payment" value="${method.id}" 
+                                ${isSelected ? 'checked' : ''}
+                                onchange="app.selectPaymentMethod('${method.id}')"
+                                class="w-5 h-5 text-blue-600 focus:ring-blue-500 mr-4 shrink-0" />
+                            <div class="flex items-center justify-between w-full">
+                                <span class="font-bold text-gray-800">${method.name}</span>
+                                <img src="${method.logo}" alt="${method.name}" class="h-6 max-w-[80px] object-contain shrink-0" />
+                            </div>
+                        </label>
+                    `;
+                });
+
+                html += `
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right: Summary -->
+                            <div class="md:col-span-1">
+                                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-6">
+                                    <h3 class="font-bold text-gray-800 mb-4 pb-4 border-b">Detail Harga</h3>
+                                    
+                                    <div class="space-y-3 text-sm mb-4">
+                                        <div class="flex justify-between text-gray-600">
+                                            <span>Tiket (${this.state.quantity}x)</span>
+                                            <span>${this.formatRupiah(subtotal)}</span>
+                                        </div>
+                                        <div class="flex justify-between text-gray-600">
+                                            <span>Biaya Admin</span>
+                                            <span>${this.formatRupiah(adminFee)}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="border-t pt-4 mb-6 flex justify-between items-center">
+                                        <span class="font-semibold text-gray-800">Total Bayar</span>
+                                        <span class="text-xl font-bold text-blue-600">${this.formatRupiah(total)}</span>
+                                    </div>
+
+                                    <button type="button" onclick="app.processPayment()" ${isBtnDisabled} class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 transition flex justify-center items-center gap-2 ${isBtnDisabled}">
+                                        ${btnContent}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return html;
+            },
+
+            getViewWaitingPayment() {
+                const method = PAYMENT_METHODS.find(m => m.id === this.state.paymentMethod);
+                const total = (this.state.selectedCategory.price * this.state.quantity) + 5000;
+                
+                let paymentInstruction = '';
+                if (this.state.paymentMethod === 'qris') {
+                    paymentInstruction = `
+                        <div class="bg-white p-4 rounded-2xl inline-block border border-gray-200 shadow-sm mb-4">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/QR_code_for_mobile_English_Wikipedia.svg/330px-QR_code_for_mobile_English_Wikipedia.svg.png" alt="QRIS Code" class="w-48 h-48 object-contain opacity-90" />
+                        </div>
+                        <p class="text-gray-600 text-sm max-w-xs mx-auto leading-relaxed">Buka aplikasi m-banking atau e-wallet Anda lalu <b>scan QR Code</b> di atas.</p>
+                    `;
+                } else if (this.state.paymentMethod === 'ew_gopay') {
+                    paymentInstruction = `
+                        <div class="bg-white p-6 rounded-2xl inline-block border border-gray-200 shadow-sm mb-4 max-w-xs w-full text-center">
+                            <img src="${method.logo}" alt="GoPay" class="h-10 mx-auto object-contain mb-6" />
+                            <button type="button" class="w-full text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 py-3 px-4 rounded-xl flex justify-center items-center gap-2 transition shadow-sm pointer-events-none">
+                                <span>Buka Aplikasi Gojek</span>
+                                <i data-lucide="external-link" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        <p class="text-gray-600 text-sm max-w-xs mx-auto leading-relaxed">Ketuk tombol di atas untuk membuka aplikasi Gojek dan selesaikan pembayaran.</p>
+                    `;
+                }
+
+                return `
+                    <div class="max-w-2xl mx-auto px-4 py-12 text-center">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-2">Menunggu Pembayaran</h2>
+                        <p class="text-gray-500 mb-8">Selesaikan pembayaran sebelum batas waktu habis.</p>
+
+                        <div class="bg-slate-50 border border-slate-200 rounded-3xl p-8 mb-8 shadow-inner relative overflow-hidden">
+                            <div class="absolute top-0 right-0 w-32 h-32 bg-blue-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 -mr-10 -mt-10"></div>
+                            <div class="absolute bottom-0 left-0 w-32 h-32 bg-green-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 -ml-10 -mb-10"></div>
+                            
+                            <div class="relative z-10">
+                                <p class="text-xs text-gray-500 font-bold uppercase tracking-widest mb-2">Total Tagihan</p>
+                                <p class="text-4xl font-black text-gray-800 mb-8">${this.formatRupiah(total)}</p>
+                                
+                                ${paymentInstruction}
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col items-center justify-center gap-4 mt-8">
+                            <div class="w-10 h-10 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin"></div>
+                            <p class="text-blue-600 font-semibold animate-pulse">Sistem sedang mendeteksi pembayaran otomatis...</p>
+                        </div>
+                    </div>
+                `;
+            },
+
+            getViewReceipt() {
+                const order = this.state.orderData;
+                if (!order) return '';
+
+                return `
+                    <div class="max-w-2xl mx-auto px-4 py-8">
+                        
+                        <!-- Success Alert -->
+                        <div class="text-center mb-8 print-hidden">
+                            <div class="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+                                <i data-lucide="check-circle" class="w-8 h-8 text-green-500"></i>
+                            </div>
+                            <h2 class="text-2xl font-bold text-gray-800">Pembayaran Berhasil!</h2>
+                            <p class="text-gray-600 mt-2">Terima kasih, e-tiket Anda telah diterbitkan.</p>
+                        </div>
+
+                        <!-- Ticket -->
+                        <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200 relative print-exact print:shadow-none print:border-2 print:border-black print:rounded-none">
+                            
+                            <!-- Cutouts -->
+                            <div class="absolute top-1/2 -left-4 w-8 h-8 bg-gray-50 rounded-full border-r border-gray-200 print-hidden"></div>
+                            <div class="absolute top-1/2 -right-4 w-8 h-8 bg-gray-50 rounded-full border-l border-gray-200 print-hidden"></div>
+
+                            <div class="bg-blue-600 text-white p-6 md:p-8 text-center print-exact print:bg-gray-800 print:text-black print:border-b-2 print:border-black">
+                                <h1 class="text-3xl font-black uppercase tracking-wider mb-2 print-exact">${order.event.title}</h1>
+                                <p class="opacity-90 font-medium">E-TIKET RESMI</p>
+                            </div>
+
+                            <div class="p-6 md:p-8 grid grid-cols-1 sm:grid-cols-3 gap-6">
+                                <div class="sm:col-span-2 space-y-4">
+                                    <div>
+                                        <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Nama Pemesan</p>
+                                        <p class="font-bold text-gray-800 text-lg">${order.buyer.name}</p>
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Tanggal</p>
+                                            <p class="font-semibold text-gray-800 flex items-center gap-1">
+                                                <i data-lucide="calendar" class="w-4 h-4 text-blue-500 print-hidden"></i> 
+                                                ${order.event.date}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Waktu</p>
+                                            <p class="font-semibold text-gray-800 flex items-center gap-1">
+                                                <i data-lucide="clock" class="w-4 h-4 text-blue-500 print-hidden"></i> 
+                                                ${order.event.time}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Lokasi</p>
+                                        <p class="font-semibold text-gray-800 flex items-start gap-1">
+                                            <i data-lucide="map-pin" class="w-4 h-4 text-red-500 shrink-0 mt-0.5 print-hidden"></i> 
+                                            ${order.event.location}
+                                        </p>
+                                    </div>
+
+                                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 print-exact print:bg-white print:border-2 print:border-black">
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <div>
+                                                <p class="text-xs text-gray-500">Kategori Tiket</p>
+                                                <p class="font-bold text-blue-600 text-lg print-exact print:text-black">${order.category.name}</p>
+                                            </div>
+                                            <div class="text-right">
+                                                <p class="text-xs text-gray-500">Jumlah</p>
+                                                <p class="font-bold text-gray-800 text-lg">${order.quantity} Orang</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-col items-center justify-center border-t sm:border-t-0 sm:border-l border-dashed border-gray-300 pt-6 sm:pt-0 sm:pl-6 print:border-black">
+                                    <div class="bg-gray-100 p-2 rounded-lg mb-3 print-exact print:bg-white print:border print:border-black print:p-0">
+                                        <i data-lucide="qr-code" class="w-24 h-24 text-gray-800" stroke-width="1"></i>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mb-1">Kode Booking</p>
+                                    <p class="font-mono font-bold text-gray-800 text-lg bg-gray-100 px-3 py-1 rounded print-exact print:bg-white print:border print:border-black">${order.orderId}</p>
+                                </div>
+                            </div>
+
+                            <div class="bg-gray-50 p-6 border-t border-dashed border-gray-300 text-sm print-exact print:bg-white print:border-t-2 print:border-black">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-gray-500">Metode Pembayaran</span>
+                                    <span class="font-medium text-gray-800">${order.paymentMethod}</span>
+                                </div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-gray-500">Waktu Pembayaran</span>
+                                    <span class="font-medium text-gray-800">${order.purchaseDate}</span>
+                                </div>
+                                <div class="flex justify-between items-center pt-2 border-t border-gray-200 mt-2 print:border-black">
+                                    <span class="font-bold text-gray-800">Total Dibayar</span>
+                                    <span class="font-bold text-blue-600 text-lg print-exact print:text-black">
+                                        ${this.formatRupiah(order.total + order.adminFee)}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="mt-8 flex flex-col sm:flex-row justify-center gap-4 print-hidden">
+                            <button type="button" onclick="app.printReceipt()" class="flex items-center justify-center gap-2 bg-gray-800 text-white font-bold py-3 px-6 rounded-xl hover:bg-gray-900 transition">
+                                <i data-lucide="printer" class="w-5 h-5"></i> Cetak Tiket
+                            </button>
+                            <button type="button" onclick="app.resetApp()" class="flex items-center justify-center gap-2 bg-blue-100 text-blue-700 font-bold py-3 px-6 rounded-xl hover:bg-blue-200 transition">
+                                Beli Tiket Lainnya
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        };
+
+        // Inisialisasi Aplikasi ketika DOM sudah siap
+        document.addEventListener('DOMContentLoaded', () => {
+            app.render();
+        });
+    </script>
+</body>
+</html>
