@@ -13,7 +13,7 @@ $dotenv->safeLoad();
 
 $pigo = new PiGoEngine();
 try {
-    $pigo->ensureEngineRunning();
+    $pigo->pastikanGoEngineRun();
 } catch (Exception $e) {
     die("Framework Error: " . $e->getMessage());
 }

@@ -8,11 +8,9 @@ use Abiesoft\App\Shared\Helpers\ApiResult;
 use Abiesoft\App\Shared\Helpers\Define;
 use Abiesoft\System\Database\DB;
 use Abiesoft\System\Http\Cookie;
-use Abiesoft\System\Http\GoEngine;
 use Abiesoft\System\Http\MiddlewareInterface;
 use Abiesoft\System\Utilities\Input;
 use Abiesoft\System\Utilities\Reader;
-use Exception;
 
 class ApiMiddleware implements MiddlewareInterface
 {
@@ -20,13 +18,6 @@ class ApiMiddleware implements MiddlewareInterface
     use ApiResult, Define;
     public function handle(): bool
     {
-
-        try {
-            GoEngine::ensureEngineRunning();
-        } catch (Exception $e) {
-            return false;
-        }
-
         if($this->defineOpsi("mode") != "develope"){
 
             $cookie = new Cookie();
@@ -72,12 +63,12 @@ class ApiMiddleware implements MiddlewareInterface
             if($method == "POST"){
                 $fid = $input->get("fid");
                 $csrf = $input->get("__csrf");
-                $kondisi = [
+                $where = [
                     'inisial' => $inisial,
                     'fid' => $fid,
                     'token' => $csrf,
                 ];
-                $validasi = $database->query("SELECT id FROM token WHERE inisial = ? AND fid = ? AND token = ? ", [$inisial, $fid, $csrf])->hitung();
+                $validasi = $database->query("SELECT id FROM token WHERE inisial = ? AND fid = ? AND token = ? ", $where)->hitung();
                 if($validasi != 1){
                     $this->forbidden("Token Expire");
                 }

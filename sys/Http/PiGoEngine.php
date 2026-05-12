@@ -12,7 +12,7 @@ class PiGoEngine
     private $socketPath = __DIR__. "/../pigo/pigo.sock";
     private $goBinaryPath = __DIR__. "/../pigo/bin/pigo-engine";
 
-    public function ensureEngineRunning() {
+    public function pastikanGoEngineRun() {
 
         if (!file_exists($this->socketPath)) {
             $this->startGoEngine();

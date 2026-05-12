@@ -5,19 +5,10 @@ import (
 	"fmt"
 	"net"
 	"os"
+
+	modules "abiesoft/src/Modules"
+	shared "abiesoft/src/Shared"
 )
-
-type PiGoRequest struct {
-	Action    string            `json:"action"`
-	Params    map[string]string `json:"params"`
-	Timestamp int64             `json:"timestamp"`
-}
-
-type PiGoResponse struct {
-	Status string      `json:"status"`
-	Data   interface{} `json:"data"`
-	Msg    string      `json:"msg"`
-}
 
 func main() {
 	socketPath := "./../sys/pigo/pigo.sock"
@@ -31,24 +22,18 @@ func main() {
 	os.Chmod(socketPath, 0777)
 
 	for {
-		conn, _ := l.Accept()
+		conn, err := l.Accept()
+		if err != nil {
+			continue
+		}
+
 		buf := make([]byte, 4096)
 		n, _ := conn.Read(buf)
 
-		var req PiGoRequest
+		var req shared.PiGoRequest
 		json.Unmarshal(buf[:n], &req)
 
-		var res PiGoResponse
-
-		switch req.Action {
-		case "wellcome":
-			paramInfo := req.Params["info"]
-			res.Status = "success"
-			res.Data = fmt.Sprintf("[Go Api Say] %s.", paramInfo)
-		default:
-			res.Status = "error"
-			res.Msg = "404 | Not Found"
-		}
+		res := modules.HandleRequest(req)
 
 		finalRes, _ := json.Marshal(res)
 		conn.Write(finalRes)
