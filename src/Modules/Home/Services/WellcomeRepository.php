@@ -22,6 +22,8 @@ class WellcomeRepository extends Service
             'info' => $info,
         ]);
 
+        // $this->success($result);
+
         if($result->status == "success") {
             $this->success($result->data);
         }else{
@@ -34,47 +36,18 @@ class WellcomeRepository extends Service
         $this->success("[PHP Api Say] ".$info);
     }
 
-    public function getOnly()
+    public function getAllSampleData()
     {
-        /*
-
-
-            ---------------------------------------------------------------
-            Menampilkan 1 data
-            ---------------------------------------------------------------
-        */
+        $result = (object)$this->call("sample-all-data");
+        $this->success($result->data);
     }
 
-    public function keep()
+    public function getOnlySampleData($id)
     {
-        /*
-
-
-            ---------------------------------------------------------------
-            Menambah data
-            ---------------------------------------------------------------
-        */
+        $result = (object)$this->call("sample-only-data",[
+            'id' => $id
+        ]);
+        $this->success($result->data);
     }
 
-    public function replace()
-    {
-        /*
-
-
-            ---------------------------------------------------------------
-            Memperbarui data
-            ---------------------------------------------------------------
-        */
-    }
-
-    public function drop()
-    {
-        /*
-
-
-            ---------------------------------------------------------------
-            Menghapus data
-            ---------------------------------------------------------------
-        */
-    }
 }

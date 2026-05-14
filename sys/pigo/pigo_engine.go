@@ -7,7 +7,7 @@ import (
 	"os"
 
 	modules "abiesoft/src/Modules"
-	shared "abiesoft/src/Shared"
+	shared "abiesoft/src/Shared/Helpers/Golang"
 )
 
 func main() {
@@ -21,6 +21,14 @@ func main() {
 	defer l.Close()
 	os.Chmod(socketPath, 0777)
 
+	db := shared.ConnectDB()
+	if err := db.Ping(); err != nil {
+		fmt.Printf("Koneksi DB Gagal: %v\n", err)
+	}
+	defer db.Close()
+
+	// var db *sql.DB
+
 	for {
 		conn, err := l.Accept()
 		if err != nil {
@@ -31,9 +39,10 @@ func main() {
 		n, _ := conn.Read(buf)
 
 		var req shared.PiGoRequest
+
 		json.Unmarshal(buf[:n], &req)
 
-		res := modules.HandleRequest(req)
+		res := modules.HandleRequest(req, db)
 
 		finalRes, _ := json.Marshal(res)
 		conn.Write(finalRes)

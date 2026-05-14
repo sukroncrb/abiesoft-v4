@@ -1,21 +1,24 @@
 package actions
 
 import (
-	shared "abiesoft/src/Shared"
-	"fmt"
+	services "abiesoft/src/GoModules/Services"
+	shared "abiesoft/src/Shared/Helpers/Golang"
+	"database/sql"
 )
 
-func HandleWellcomeAction(req shared.PiGoRequest) shared.PiGoResponse {
+func HandleWellcomeAction(req shared.PiGoRequest, db *sql.DB) shared.PiGoResponse {
 	var res shared.PiGoResponse
 
 	switch req.Action {
 	case "wellcome":
-		info := req.Params["info"]
-		res.Status = "success"
-		res.Data = fmt.Sprintf("[Go Api Say] %s", info)
+		return services.GetWelcomeMessage(res, db, req)
+	case "sample-all-data":
+		return services.GetAllSampleService(res, db, req)
+	case "sample-only-data":
+		return services.GetOnlySampleService(res, db, req)
 	default:
 		res.Status = "error"
-		res.Msg = "Action Not Found"
+		res.Msg = "Action Tidak Terdaftar"
 	}
 
 	return res
