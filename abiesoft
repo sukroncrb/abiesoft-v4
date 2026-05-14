@@ -1,18 +1,14 @@
-#!/usr/bin/env php
 <?php
 
 declare(strict_types=1);
 
 use Abiesoft\System\Console\Kernel;
-use Dotenv\Dotenv; // Import Dotenv
+use Dotenv\Dotenv;
 
 require_once __DIR__ . '/vendor/autoload.php';
 
-// 1. Load Environment Variables (.env)
-// Gunakan safeLoad() agar tidak error jika file .env belum dibuat
 $dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->safeLoad();
 
-// 2. Jalankan Kernel Console
 $kernel = new Kernel();
 $kernel->handle($argv);

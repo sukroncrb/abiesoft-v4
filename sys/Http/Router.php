@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Abiesoft\System\Http;
 
-use Abiesoft\App\Modules\Token\Actions\CsrfTokenAction;
 use Abiesoft\App\Shared\Middleware\ApiMiddleware;
+use Abiesoft\System\Auth\CsrfTokenAction;
 use Abiesoft\System\Auth\GetRefreshBearerTokenAction;
 use Abiesoft\System\Auth\GetRefreshTokenAction;
 use Abiesoft\System\Auth\LogoutAuthAction;
@@ -75,7 +75,7 @@ class Router
         $this->get("/testing",Testing::class);
         $this->get("/api/logout", LogoutAuthAction::class, [ ApiMiddleware::class ]);
         $this->get("/api/token/{fid}", GetRefreshTokenAction::class, [ ApiMiddleware::class ]);
-        $this->get("/api/auth/refresh-bearer", GetRefreshBearerTokenAction::class, [ ApiMiddleware::class ]);
+        $this->get("/api/auth/refresh-token", GetRefreshBearerTokenAction::class, [ ApiMiddleware::class ]);
     }
         
     public function resolve(string $uri, string $method): void

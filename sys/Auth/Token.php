@@ -23,8 +23,7 @@ class Token extends Service
     public function getToken($fid)
     {
         $inisial = $this->defineOpsi('inisial');
-        $db = (new DB)->terhubung();
-        $token = $db->query("SELECT token FROM token WHERE fid = ? AND inisial = ? ", [$fid, $inisial])->teks();
+        $token = $this->db->query("SELECT token FROM token WHERE fid = ? AND inisial = ? ", [$fid, $inisial])->teks();
         $this->success($token);
     }
 

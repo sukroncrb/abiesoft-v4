@@ -478,7 +478,7 @@ const app = {
 async function getData(endpoint) {
     try {
         
-        perbaruiBearer();
+        perbaruiToken();
         
         const response = await fetch(app.state.baseurl + "api/" + endpoint, {
             method: 'GET',
@@ -516,7 +516,7 @@ async function postData(formdata, endpoint, form, labelCustom = "Menyimpan") {
         let loaderBtn = '<div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> '+labelCustom+'...';
         if(form){
             
-            perbaruiBearer();
+            perbaruiToken();
         
             if(form.querySelector('[type="submit"]')){
                 btnSubmit = form.querySelector('[type="submit"]');
@@ -595,7 +595,7 @@ async function postDelete(form) {
             formdata.append("uuid", uuid);
         }
 
-        perbaruiBearer();
+        perbaruiToken();
 
         const response = await fetch(app.state.baseurl + "api/" + tabel, {
             method: 'POST',
@@ -643,25 +643,35 @@ async function postDelete(form) {
     }
 }
 
-let lastBearerRefresh = Date.now();
-async function perbaruiBearer() {
+let refreshTokenTerakhir = Date.now();
+function perbaruiToken() {
     const sekarang = Date.now();
+
     const sepuluhMenit = 10 * 60 * 1000;
 
-    if (sekarang - lastBearerRefresh > sepuluhMenit) {
-        try {
-            let result = await getData("auth/refresh-bearer");
-            if (result.code == 200) {
-                document.getElementById('app').dataset.bearer = result.data;
-                app.state.token = result.data;
-                lastBearerRefresh = sekarang;
-                console.log(token);
+    if (sekarang - refreshTokenTerakhir > sepuluhMenit) {
+        fetch(app.state.baseurl + "api/auth/refresh-token", {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${app.state.token}`
             }
-        } catch (e) {
+        })
+        .then(response => response.json())
+        .then(result => {
             if (app.state.mode === "develope") {
-                console.error("Gagal refresh Bearer");
+                console.error(result);
             }
-        }
+            if (result.code == 200) {
+                console.log(result);
+                document.getElementById('app').dataset.token = result.data;
+                app.state.token = result.data;
+                refreshTokenTerakhir = sekarang;
+            }else{
+                if (app.state.mode === "develope") {
+                    console.error("Gagal refresh Bearer");
+                }
+            }
+        });
     }
 }
 

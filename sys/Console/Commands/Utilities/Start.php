@@ -21,8 +21,9 @@ trait Start
     {
         $host = $_ENV['SERVER_HOST'] ?? '127.0.0.1';
         $port = $_ENV['SERVER_PORT'] ?? '8000';
+        $publif_folder  = $_ENV['PUBLIC_FOLDER'] ?? 'public';
         echo self::COLOR_GREEN . "🚀 Menyalakan Abiesoft Server di http://{$host}:{$port}..." . self::COLOR_RESET . PHP_EOL;
-        passthru("php -S {$host}:{$port} -t public");
+        passthru("php -S {$host}:{$port} -t {$publif_folder}");
     }
 
 }

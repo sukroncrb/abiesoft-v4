@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Abiesoft\App\Shared\Middleware;
 
-use Abiesoft\App\Shared\Helpers\ApiResult;
-use Abiesoft\App\Shared\Helpers\Define;
 use Abiesoft\System\Http\MiddlewareInterface;
 
 class NoCacheMiddleware implements MiddlewareInterface
