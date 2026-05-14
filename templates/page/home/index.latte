@@ -159,6 +159,58 @@
             transform: scale(0.98);
         }
     </style>
+
+
+    <style>
+        .google-shadow {
+            box-shadow: 0 1px 2px 0 rgba(60,64,67,0.30), 0 1px 3px 1px rgba(60,64,67,0.15);
+        }
+        .google-input:focus {
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 1px #1a73e8;
+        }
+        /* Custom Toggle Switch */
+        .switch-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #7b7fb3; /* Warna PHP-ish */
+            transition: .4s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px; width: 18px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        /* Checked state = Golang */
+        input:checked + .slider { background-color: #00add8; } /* Warna Go Blue */
+        input:checked + .slider:before { transform: translateX(24px); }
+
+        .modal-overlay {
+            background-color: rgba(32, 33, 36, 0.6);
+            backdrop-filter: blur(2px);
+        }
+
+        .tech-badge-php { background-color: #f3f0ff; color: #6b21a8; }
+        .tech-badge-go { background-color: #ecfeff; color: #0891b2; }
+    </style>
 </head>
 <body>
 
@@ -184,35 +236,132 @@
             <span class="text-[#8892BE] font-semibold italic">Php Framework</span>. Rasa <span class="text-[#00ADD8] font-semibold italic">Golang Framework</span>.
         </p>
 
-        <!-- Response Area -->
-        <div class="pixel-terminal" id="terminal-box">
-            <div class="terminal-header">
-                <div class="terminal-title">pigo@abiesoft:~/server</div>
-                <div class="window-controls">
-                    
+        <div class="flex justify-start items-center mt-8" style="border-bottom: 1px solid #eee;">
+            <button data-btnswitch="testget" type="button" class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 transition-all">Test Get</button>
+            <button data-btnswitch="testcrud" type="button" class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 transition-all">Test CRUD</button>
+        </div>
+
+
+        <div id="testget" class="">
+            <!-- Response Area -->
+                <div class="pixel-terminal" id="terminal-box">
+                    <div class="terminal-header">
+                        <div class="terminal-title">pigo@abiesoft:~/server</div>
+                        <div class="window-controls">
+                            
+                        </div>
+                    </div>
+                    <div class="terminal-body"><pre id="output-json"></span></pre>
+                    </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="getDataGolangApi(this.dataset.getby)" data-getby="php" class="btn-ping">
+                    Refresh Dengan Php
+                </button>
+                <button onclick="getDataGolangApi(this.dataset.getby)" data-getby="go" class="btn-ping">
+                    Refresh Dengan Go
+                </button>
+            </div>
+        </div>
+
+
+        <!--  POST Area -->
+        <div id="testcrud" class="mt-8 text-left hidden">
+            <div class="max-w-4xl mx-auto">
+                <!-- Header Section -->
+                <div class="flex justify-between items-center mb-8">
+                    <div class="flex items-center space-x-3">
+                        <div class="bg-white p-2 rounded-lg">
+                            <i data-lucide="arrow-right-left"></i>
+                        </div>
+                        <h1 class="text-lg font-medium text-gray-800">Test CRUD</h1>
+                    </div>
+                    <button onclick="openModal('add')" class="bg-[#1a73e8] hover:bg-blue-700 text-white px-6 py-1 rounded-md text-sm font-medium transition-all shadow-sm flex items-center">
+                        <span class="mr-2 text-xl">+</span> Tambah Data
+                    </button>
+                </div>
+
+                <!-- Table Container -->
+                <div class="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th class="px-6 py-4 text-sm font-medium text-gray-500 uppercase tracking-wider">Nama</th>
+                                <th class="px-6 py-4 text-sm font-medium text-gray-500 uppercase tracking-wider text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body" class="divide-y divide-gray-200">
+                            <!-- Data injected here -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
-            <div class="terminal-body">
-<pre id="output-json"></span></pre>
+
+            <!-- Modal Add/Edit -->
+            <div id="form-modal" class="fixed inset-0 modal-overlay hidden flex items-center justify-center z-50">
+                <form data-form="formSample" method="post" data-function="submitSample" class="bg-white rounded-lg google-shadow w-full max-w-md m-4 overflow-hidden">
+                    <div class="p-6">
+                        <h2 id="modal-title" class="text-xl font-medium text-gray-800 mb-6">Tambah Nama</h2>
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Nama</label>
+                                <input type="text" id="nama" name="nama" data-validasi="setText" data-label="Nama" class="w-full px-3 py-2 border border-gray-300 rounded-md google-input outline-none transition-all" placeholder="Contoh: John Doe">
+                            </div>
+
+                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100">
+                                <div>
+                                    <span class="text-sm font-medium text-gray-700">Pilih Teknologi</span>
+                                    <p class="text-xs text-gray-500">Ingin post menggunakan apa?</p>
+                                </div>
+                                <div class="switch-container">
+                                    <span class="text-xs font-bold text-[#7b7fb3]">PHP</span>
+                                    <label class="switch">
+                                        <input type="checkbox" id="input-switch" name="tech">
+                                        <span class="slider"></span>
+                                    </label>
+                                    <span class="text-xs font-bold text-[#00add8]">GO</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-8 flex justify-end space-x-3">
+                            <button type="button" onclick="closeModal('form')" class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-md transition-all">Batal</button>
+                            <button type="submit" class="flex flex-between gap-6 px-6 py-2 text-sm font-medium bg-[#1a73e8] text-white hover:bg-blue-700 rounded-md transition-all">Simpan</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Modal Delete Confirmation -->
+            <div id="delete-modal" class="fixed inset-0 modal-overlay hidden flex items-center justify-center z-50">
+                <div class="bg-white rounded-lg google-shadow w-full max-w-sm m-4">
+                    <div class="p-6 text-center">
+                        <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </div>
+                        <h2 class="text-lg font-medium text-gray-800 mb-2">Hapus Data?</h2>
+                        <p class="text-sm text-gray-500 mb-6">Apakah Anda yakin ingin menghapus data <strong id="konfirmasiNama"></strong>? Tindakan ini tidak bisa dibatalkan.</p>
+                        
+                        <div class="flex justify-center space-x-3">
+                            <button type="button" onclick="closeModal('delete')" class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-md transition-all">Batal</button>
+                            <button data-form="hapusSample" data-function="hapusDataSample" data-label="" data-next="fc:closeModalWithoutClick" data-id="" data-tabel="sample" class="px-6 py-2 text-sm font-medium bg-red-600 text-white hover:bg-red-700 rounded-md transition-all shadow-sm">Hapus Sekarang</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
-            <button onclick="getDataGolangApi(this.dataset.getby)" data-getby="php" class="btn-ping">
-                Refresh Dengan Php
-            </button>
-            <button onclick="getDataGolangApi(this.dataset.getby)" data-getby="go" class="btn-ping">
-                Refresh Dengan Go
-            </button>
-        </div>
 
-        <footer class="mt-16 text-slate-400 text-xs font-medium uppercase tracking-widest">
-            Edit <code class="bg-slate-100 px-1.5 py-0.5 rounded text-blue-600">templates/page/home/index.latte</code> untuk mulai
-        </footer>
-    </div>
+    <footer class="mt-16 text-slate-400 text-xs font-medium uppercase tracking-widest mb-8">
+        Edit <code class="bg-slate-100 px-1.5 py-0.5 rounded text-blue-600">templates/page/home/index.latte</code> untuk mulai
+    </footer>
 
+    <div id="toastContainer" class="fixed top-4 left-[50%] translate-x-[-50%] z-50 flex flex-col gap-3 pointer-events-none items-end" style="z-index: 999;"></div>
     <div id="app" data-baseurl="{$baseurl}" data-token="{$token}" data-mode="{$mode}" data-output="{$output}" data-page="{$page}"></div>
-
 
     <script src="{$baseurl}assets/package/lucide/lucide.js"></script>
     <script src="{$baseurl}assets/package/lucide/lucide.min.js"></script>
@@ -239,6 +388,191 @@
         }
 
         getDataGolangApi("go");
+
+        function submitSample(formdata, form){
+            postData(formdata, "sample", form).then(result =>{
+                console.log(result);
+            });
+        }
+
+    </script>
+
+
+
+    <!-- POST Script -->
+    <script n:syntax="off">
+        let data = [];
+        
+        let currentEditId = null;
+        let currentDeleteId = null;
+        
+        const tableBody = document.getElementById('table-body');
+        const formModal = document.getElementById('form-modal');
+        const deleteModal = document.getElementById('delete-modal');
+        const inputNama = document.getElementById('nama');
+        const inputSwitch = document.getElementById('input-switch');
+        const modalTitle = document.getElementById('modal-title');
+
+        function renderTable() {
+            tableBody.innerHTML = '';
+            data.forEach((item) => {
+                const isGo = item.tech === 'Golang';
+                const badgeClass = isGo ? 'tech-badge-go' : 'tech-badge-php';
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50 transition-colors';
+                row.innerHTML = `
+                    <td class="px-6 py-4">
+                        <div class="flex items-center">
+                            <div class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-medium text-sm mr-3 border border-gray-200">
+                                ${item.nama.charAt(0)}
+                            </div>
+                            <div>
+                                <span class="text-sm text-gray-800 font-medium block">${item.nama}</span>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${badgeClass}">
+                                    ${item.tech}
+                                </span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-right space-x-1">
+                        <button onclick="openModal('edit', ${item.id})" class="text-blue-600 hover:bg-blue-50 px-3 py-1.5 rounded text-sm font-medium transition-all">Edit</button>
+                        <button onclick="openModal('delete', ${item.id})" class="text-red-600 hover:bg-red-50 px-3 py-1.5 rounded text-sm font-medium transition-all">Hapus</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function loaderTabel(){
+            tableBody.innerHTML = '';
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-gray-50 transition-colors';
+            row.innerHTML = `
+                <td class="px-6 py-4 text-center" colspan="2">
+                    <div class="loader-sm text-slate-400">Memperbarui data..</div>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        }
+
+        function renderEmptyTable(){
+            tableBody.innerHTML = '';
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-gray-50 transition-colors';
+            row.innerHTML = `
+                <td class="px-6 py-4 text-center" colspan="2">
+                    Belum Ada Data
+                </td>
+            `;
+            tableBody.appendChild(row);
+        }
+
+        function loadDataSample() {
+            getData("sample").then(result => {
+                data = result.data;
+                if(data.length > 0){
+                    renderTable();
+                }else{
+                    renderEmptyTable();
+                }
+            });
+        }
+
+        loadDataSample();
+
+        function openModal(type, id = null) {
+            if (type === 'add') {
+                currentEditId = null;
+                modalTitle.innerText = "Form Sample";
+                inputNama.value = "";
+                inputSwitch.checked = false;
+                formModal.querySelector("[data-form='formSample']").removeAttribute("data-id");
+                formModal.classList.remove('hidden');
+                inputNama.focus();
+            } else if (type === 'edit') {
+                const item = data.find(d => d.id === id);
+                currentEditId = id;
+                formModal.querySelector("[data-form='formSample']").setAttribute("data-id",currentEditId);
+                modalTitle.innerText = "Form Edit Sample";
+                inputNama.value = item.nama;
+                inputSwitch.checked = (item.tech === 'Golang');
+                formModal.classList.remove('hidden');
+            } else if (type === 'delete') {
+                const item = data.find(d => d.id === id);
+                currentDeleteId = id;
+                document.getElementById("konfirmasiNama").innerHTML = item.nama;
+                deleteModal.querySelector("[data-form='hapusSample']").dataset.label = item.nama;
+                deleteModal.querySelector("[data-form='hapusSample']").dataset.id = currentDeleteId;
+                console.log(deleteModal.querySelector("[data-form='hapusSample']"));
+                deleteModal.classList.remove('hidden');
+            }
+        }
+
+        function closeModal(modal) {
+            if (modal === 'form') formModal.classList.add('hidden');
+            if (modal === 'delete') deleteModal.classList.add('hidden');
+        }
+
+        formModal.addEventListener('click', (e) => { if(e.target === formModal) closeModal('form'); });
+        deleteModal.addEventListener('click', (e) => { if(e.target === deleteModal) closeModal('delete'); });
+
+        function submitSample(formdata, form){
+            postData(formdata, "sample", form).then(result => {
+                if(result.code == 200){
+                    closeModal('form');
+                    if(form.dataset.id) {
+                        app.showToast("Data diperbarui","success");
+                    }else{
+                        inputNama.value = "";
+                        app.showToast("Data baru ditambahkan","success");
+                    }
+                    loaderTabel();
+                    setTimeout(()=>{
+                        loadDataSample();
+                    });
+                }else{
+                    app.showToast("Gagal menambahkan data","error");
+                }
+            });
+        }
+
+        function closeModalWithoutClick() {
+            closeModal('delete');
+            loaderTabel();
+            setTimeout(()=>{
+                loadDataSample();
+            });
+        }
+
+
+        let switchButtons = document.querySelectorAll("[data-btnswitch]");
+        if (switchButtons.length > 0) {
+            
+            switchButtons.forEach(btn => {
+                btn.addEventListener("click", () => {
+                    setSwitchButton(btn.dataset.btnswitch);
+                });
+            });
+
+            function setSwitchButton(aktifId) {
+                switchButtons.forEach(btn => {
+                    const targetId = btn.dataset.btnswitch;
+                    const targetElement = document.getElementById(targetId);
+
+                    if (targetElement) {
+                        if (targetId === aktifId) {
+                            btn.setAttribute("class","px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 transition-all");
+                            targetElement.classList.remove("hidden");
+                        } else {
+                            btn.setAttribute("class","px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 transition-all");
+                            targetElement.classList.add("hidden");
+                        }
+                    }
+                });
+            }
+
+            setSwitchButton("testget");
+        }
 
     </script>
 </body>

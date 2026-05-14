@@ -1,5 +1,6 @@
 <?php
 
+use Abiesoft\App\Modules\Home\Actions\PostSampleHomeAction;
 use Abiesoft\App\Modules\Home\Actions\SampleAllDataHomeAction;
 use Abiesoft\App\Modules\Home\Actions\SampleBigDataHomeAction;
 use Abiesoft\App\Modules\Home\Actions\SampleOnlyDataHomeAction;
@@ -18,6 +19,10 @@ $router->get('/api/wellcome/{info}/{getby}', WellcomeHomeAction::class, [
 ]);
 
 $router->get('/api/sample', SampleAllDataHomeAction::class, [
+    ApiMiddleware::class
+]);
+
+$router->post('/api/sample', PostSampleHomeAction::class, [
     ApiMiddleware::class
 ]);
 
