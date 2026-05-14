@@ -50,4 +50,13 @@ class WellcomeRepository extends Service
         $this->success($result->data);
     }
 
+    public function getSampleBigData($offset, $limit)
+    {
+        $result = (object)$this->call("sample-big-data",[
+            'offset' => $offset,
+            'limit' => $limit
+        ]);
+        $this->success($result->data);
+    }
+
 }

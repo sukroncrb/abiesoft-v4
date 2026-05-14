@@ -222,7 +222,6 @@
         let outputJsonView = el("#output-json");
         let info = "start";
         function getDataGolangApi(getby){
-            console.log(getby);
             getData("wellcome/"+info+"/"+getby).then(result =>{
                 outputJsonView.innerHTML = result.data;
                 if(info == "start"){
@@ -240,6 +239,7 @@
         }
 
         getDataGolangApi("go");
+
     </script>
 </body>
 </html>

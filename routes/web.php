@@ -1,6 +1,7 @@
 <?php
 
 use Abiesoft\App\Modules\Home\Actions\SampleAllDataHomeAction;
+use Abiesoft\App\Modules\Home\Actions\SampleBigDataHomeAction;
 use Abiesoft\App\Modules\Home\Actions\SampleOnlyDataHomeAction;
 use Abiesoft\App\Modules\Home\Actions\ShowHomeAction;
 use Abiesoft\App\Modules\Home\Actions\WellcomeHomeAction;
@@ -17,6 +18,10 @@ $router->get('/api/wellcome/{info}/{getby}', WellcomeHomeAction::class, [
 ]);
 
 $router->get('/api/sample', SampleAllDataHomeAction::class, [
+    ApiMiddleware::class
+]);
+
+$router->get('/api/sample/{offset}/{limit}', SampleBigDataHomeAction::class, [
     ApiMiddleware::class
 ]);
 

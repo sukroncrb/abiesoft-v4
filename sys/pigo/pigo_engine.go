@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -27,25 +28,30 @@ func main() {
 	}
 	defer db.Close()
 
-	// var db *sql.DB
-
 	for {
 		conn, err := l.Accept()
 		if err != nil {
 			continue
 		}
 
-		buf := make([]byte, 4096)
-		n, _ := conn.Read(buf)
-
-		var req shared.PiGoRequest
-
-		json.Unmarshal(buf[:n], &req)
-
-		res := modules.HandleRequest(req, db)
-
-		finalRes, _ := json.Marshal(res)
-		conn.Write(finalRes)
-		conn.Close()
+		go handleConnection(conn, db)
 	}
+}
+
+func handleConnection(conn net.Conn, db *sql.DB) {
+	defer conn.Close()
+
+	buf := make([]byte, 4096)
+	n, err := conn.Read(buf)
+	if err != nil || n == 0 {
+		return
+	}
+
+	var req shared.PiGoRequest
+	json.Unmarshal(buf[:n], &req)
+
+	res := modules.HandleRequest(req, db)
+
+	finalRes, _ := json.Marshal(res)
+	conn.Write(finalRes)
 }

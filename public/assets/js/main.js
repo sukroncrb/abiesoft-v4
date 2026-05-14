@@ -509,6 +509,42 @@ async function getData(endpoint) {
     }
 }
 
+async function getBigData(endpoint) {
+    let allData = [];
+    let offset = 0;
+    const limit = 100;
+    let keepFetching = true;
+    if(app.state.mode == "develope"){
+        console.log("Memulai penarikan data besar...");
+    }
+    while (keepFetching) {
+        const pagedEndpoint = `${endpoint}/${offset}/${limit}`;
+        try {
+            const result = await getData(pagedEndpoint);
+            const dataChunk = result.data || [];
+            if (Array.isArray(dataChunk) && dataChunk.length > 0) {
+                allData = allData.concat(dataChunk);
+                if(app.state.mode == "develope"){
+                    console.log(`Berhasil mengambil ${allData.length} data...`);
+                }
+                offset += limit;
+            } else {
+                keepFetching = false;
+                if(app.state.mode == "develope"){
+                    console.log("Semua data telah diambil.");
+                }
+            }
+        } catch (error) {
+            if(app.state.mode == "develope"){
+                console.error("Gagal mengambil batch data pada offset: ", offset);
+            }
+            keepFetching = false; 
+        }
+    }
+
+    return allData;
+}
+
 async function postData(formdata, endpoint, form, labelCustom = "Menyimpan") {
     let btnSubmit = "";
     let labelButton = "";

@@ -16,6 +16,8 @@ func HandleWellcomeAction(req shared.PiGoRequest, db *sql.DB) shared.PiGoRespons
 		return services.GetAllSampleService(res, db, req)
 	case "sample-only-data":
 		return services.GetOnlySampleService(res, db, req)
+	case "sample-big-data":
+		return services.GetSampleBigDataService(res, db, req)
 	default:
 		res.Status = "error"
 		res.Msg = "Action Tidak Terdaftar"
