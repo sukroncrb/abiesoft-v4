@@ -13,6 +13,7 @@ trait Compile
         $fileSock = "sys/pigo/pigo.sock";
         $sourcePath = "./sys/pigo";
         $fullOutputPath = $root . "/" . $outputPath;
+        $arch = $_ENV['ARCH_OS'];
 
         echo "\n\e[34m--- AbieSoft Framework Build System ---\e[0m\n";
 
@@ -31,7 +32,7 @@ trait Compile
         ];
 
         // Gunakan 'amd64' secara eksplisit
-        $cmd = "cd $root && go mod tidy && GOOS=linux GOARCH=amd64 go build -o $outputPath $sourcePath";
+        $cmd = "cd $root && go mod tidy && GOOS=linux GOARCH=$arch go build -o $outputPath $sourcePath";
         $process = proc_open($cmd, $descriptorspec, $pipes);
 
         if (is_resource($process)) {
