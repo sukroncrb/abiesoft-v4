@@ -3,11 +3,14 @@
 
 date_default_timezone_set("Asia/Bangkok");
 
+use Abiesoft\System\Exception\ErrorHandler;
 use Abiesoft\System\Http\PiGoEngine;
 use Abiesoft\System\Http\Router;
 use Dotenv\Dotenv;
 
 require_once __DIR__ . '/../vendor/autoload.php';
+
+ErrorHandler::register();
 
 $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->safeLoad();

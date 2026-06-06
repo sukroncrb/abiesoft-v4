@@ -9,7 +9,6 @@ use PDOException;
 
 class DB
 {
-
     use Query;
     private static $terhubung = null;
 
@@ -17,7 +16,7 @@ class DB
         $_pdo,
         $_query,
         $_error = false,
-        $_hasil,
+        $_hasil = [],
         $_hitung = 0;
 
     public function __construct()
@@ -30,11 +29,9 @@ class DB
                 $_ENV['DB_PASS']
             );
         } catch (PDOException $error) {
-
             if ($_ENV['MODE'] == 'develope') {
                 die($error);
             }
-
             exit();
         }
     }
@@ -49,16 +46,20 @@ class DB
 
     public function hasil(): array
     {
-        return $this->_hasil;
+        return $this->_hasil ?? [];
     }
 
     public function json()
     {
-        return json_encode($this->_hasil);
+        return json_encode($this->hasil());
     }
 
     public function teks()
     {
+        if ($this->_hitung === 0 || empty($this->_hasil)) {
+            return '';
+        }
+
         $result = '';
         foreach($this->_hasil[0] as $k => $v){
             $result = $this->_hasil[0]->$k;
@@ -68,6 +69,10 @@ class DB
 
     public function angka()
     {
+        if ($this->_hitung === 0 || empty($this->_hasil)) {
+            return 0;
+        }
+
         $result = '';
         foreach($this->_hasil[0] as $k => $v){
             $result = $this->_hasil[0]->$k;
@@ -80,8 +85,12 @@ class DB
         return $this->_error;
     }
 
-    public function awal(): object
+    public function awal(): ?object
     {
+        if ($this->_hitung === 0 || empty($this->hasil())) {
+            return null; 
+        }
+
         return $this->hasil()[0];
     }
 

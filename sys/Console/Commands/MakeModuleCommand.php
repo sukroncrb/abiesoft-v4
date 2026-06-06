@@ -152,7 +152,7 @@ class MakeModuleCommand extends BaseCommand
                 default => ''
             };
             
-            $mapping .= "            {$nama}: {$cast}(\$data['{$nama}'] ?? null),\n";
+            $mapping .= "            {$nama}: {$cast}\$input->get('{$nama}') ?? null,\n";
         }
 
         $content = <<<PHP
@@ -162,19 +162,21 @@ class MakeModuleCommand extends BaseCommand
 
         namespace Abiesoft\App\Modules\\{$namaModule}\Dto;
 
+        use Abiesoft\System\Utilities\Input;
+
         readonly class {$className}
         {
+
             public function __construct(
-                public ?int \$id, // ID selalu default
-                public ?string \$uuid, // UUID selalu default
+                public ?int \$id,
         {$properties}
             ) {}
 
-            public static function fromArray(array \$data, ?string \$uuid = null): self
+            public static function fromArray(): self
             {
+                \$input = new Input();
                 return new self(
-                    id: isset(\$data['id']) ? (int)\$data['id'] : null,
-                    uuid: \$uuid ?? (\$data['uuid'] ?? null),
+                    id: \$input->get('id') ? (int)\$input->get('id') : null,
         {$mapping}
                 );
             }
@@ -208,9 +210,11 @@ class MakeModuleCommand extends BaseCommand
 
         use Abiesoft\App\Modules\Proyek\Dto\ProyekData;
         use Abiesoft\App\Modules\\{$namaModule}\Dto\\{$dtoClass};
+        use Abiesoft\App\Shared\Helpers\Service;
         use Abiesoft\System\Database\DB;
+        use Abiesoft\System\Utilities\Input;
 
-        class {$className}
+        class {$className} extends Service
         {
             private \$db;
 
@@ -241,7 +245,21 @@ class MakeModuleCommand extends BaseCommand
                 */
             }
 
-            public function keep({$dtoClass} \$dto)
+            public function post({$dtoClass} \$dto)
+            {
+                \$input = new Input();
+                if(\$input->get("__method") == "DELETE"){
+                    \$this->drop();
+                }else{
+                    if(\$input->get("id") != "" || \$input->get("uuid") != ""){
+                        \$this->replace();
+                    }else{
+                        \$this->keep(\$dto);
+                    }
+                }
+            }
+
+            protected function keep({$dtoClass} \$dto)
             {
                 return \$this->db->input('{$tableName}', [
                     'uuid' => \$dto->uuid,
@@ -249,7 +267,7 @@ class MakeModuleCommand extends BaseCommand
                 ]);
             }
 
-            public function replace()
+            protected function replace()
             {
                 /*
 
@@ -260,7 +278,7 @@ class MakeModuleCommand extends BaseCommand
                 */
             }
 
-            public function drop()
+            protected function drop()
             {
                 /*
 
@@ -305,7 +323,7 @@ class MakeModuleCommand extends BaseCommand
         $this->buatFIle($folderPath . '/' . $classIndex . '.php', $indexContent, $classIndex);
 
         // 2. Store Action (Tetap sama, karena tidak pakai View)
-        $storeClass = "Keep{$namaModule}Action";
+        $storeClass = "Post{$namaModule}Action";
         $dtoClass = "{$namaModule}Data";
         
         $storeContent = <<<PHP
@@ -324,10 +342,8 @@ class MakeModuleCommand extends BaseCommand
             public function __invoke(): void
             {
                 \$repo = new {$classRepo}();
-                // Generate UUID & Mapping DTO
-                \$uuid = Uuid::v4();
-                \$dto = {$dtoClass}::fromArray(\$_POST, \$uuid);
-                \$repo->keep(\$dto);
+                \$dto = {$dtoClass}::fromArray();
+                \$repo->post(\$dto);
                 exit;
             }
         }

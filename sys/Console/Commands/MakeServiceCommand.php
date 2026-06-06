@@ -39,6 +39,7 @@ class MakeServiceCommand extends BaseCommand
 
         use Abiesoft\App\Shared\Helpers\Service;
         use Abiesoft\System\Database\DB;
+        use Abiesoft\System\Utilities\Input;
 
         class {$namaClass} extends Service
         {
@@ -71,7 +72,21 @@ class MakeServiceCommand extends BaseCommand
                 */
             }
 
-            public function keep()
+            public function post()
+            {
+                \$input = new Input();
+                if(\$input->get("__method") == "DELETE"){
+                    \$this->drop();
+                }else{
+                    if(\$input->get("id") != "" || \$input->get("uuid") != ""){
+                        \$this->replace();
+                    }else{
+                        \$this->keep();
+                    }
+                }
+            }
+
+            protected function keep()
             {
                 /*
 
@@ -82,7 +97,7 @@ class MakeServiceCommand extends BaseCommand
                 */
             }
 
-            public function replace()
+            protected function replace()
             {
                 /*
 
@@ -93,7 +108,7 @@ class MakeServiceCommand extends BaseCommand
                 */
             }
 
-            public function drop()
+            protected function drop()
             {
                 /*
 
