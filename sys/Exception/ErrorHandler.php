@@ -2,6 +2,8 @@
 
 namespace Abiesoft\System\Exception;
 
+use Abiesoft\App\Shared\Helpers\ApiResult;
+use Abiesoft\App\Shared\Helpers\Define;
 use Throwable;
 
 class ErrorHandler
@@ -76,8 +78,9 @@ class ErrorHandler
         }
 
         if (!$isDevelopment) {
-            header($_SERVER["SERVER_PROTOCOL"] . " 500 Internal Server Error");
-            echo "<h1>500 Internal Server Error</h1><p>Sesuatu yang salah telah terjadi pada server kami.</p>";
+            header('location: /');
+            // header($_SERVER["SERVER_PROTOCOL"] . " 500 Internal Server Error");
+            // echo "<h1>500 Internal Server Error</h1><p>Sesuatu yang salah telah terjadi pada server kami.</p>";
             exit;
         }
 
