@@ -49,3 +49,5 @@ EMAIL_HOST=""
 # Perbaikan: GOARCH biasanya 'amd64' atau 'arm64'. 
 # Jika amd64 biasanya support Window, Linux dan Mac
 ARCH_OS=amd64
+
+PIN=

@@ -3,72 +3,170 @@
  * Elegant & Modern Exception Template
  * Fitur: Deteksi otomatis framework, variabel lingkungan,
  * pengelompokan stack trace berdasarkan Kategori (User, Abiesoft, Pihak Ke-3),
- * sistem dropdown, dan Live Code Viewer Popup dengan animasi loading.
+ * sistem dropdown, Live Code Viewer, dan proteksi variabel sensitif $_SERVER dengan PIN.
  */
 
-// ==========================================
-// 0. SECURE AJAX SOURCE CODE READER ENDPOINT
-// ==========================================
-if (isset($_GET['action']) && $_GET['action'] === 'get_source' && isset($_GET['file'])) {
-    // Bersihkan buffer output sebelumnya agar respon murni JSON
-    if (ob_get_length()) ob_clean();
-    header('Content-Type: application/json');
+// ========================================================
+// HELPER UNTUK MEMBACA DAN MEM-PARSE FILE .ENV SECARA AMAN
+// ========================================================
+function loadEnvironmentVariables() {
+    $env = [];
     
-    $fileToRead = $_GET['file'];
-    $lineToRead = isset($_GET['line']) ? (int)$_GET['line'] : 1;
+    // Ambil variabel dari environment bawaan sistem/server dahulu
+    foreach ($_ENV as $k => $v) {
+        $env[$k] = $v;
+    }
     
-    // Keamanan Ketat: Hanya izinkan membaca file yang benar-benar ada di dalam Stack Trace Exception ini
-    $allowedFiles = [];
-    if (isset($exception)) {
-        $allowedFiles[] = $exception->getFile();
-        foreach ($exception->getTrace() as $trace) {
-            if (isset($trace['file'])) {
-                $allowedFiles[] = $trace['file'];
+    // Daftar lokasi pencarian file .env (menyesuaikan struktur framework)
+    $paths = [
+        __DIR__ . '/.env',
+        __DIR__ . '/../.env',
+        __DIR__ . '/../../.env',
+        __DIR__ . '/../../../.env',
+        $_SERVER['DOCUMENT_ROOT'] . '/.env',
+    ];
+    
+    foreach ($paths as $path) {
+        if (file_exists($path) && is_file($path)) {
+            $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            if ($lines !== false) {
+                foreach ($lines as $line) {
+                    $line = trim($line);
+                    // Abaikan baris kosong atau baris komentar
+                    if ($line === '' || strpos($line, '#') === 0) {
+                        continue;
+                    }
+                    if (strpos($line, '=') !== false) {
+                        list($name, $value) = explode('=', $line, 2);
+                        $name = trim($name);
+                        $value = trim($value);
+                        // Bersihkan tanda kutip pembungkus jika ada
+                        $value = trim($value, '"\'');
+                        $env[$name] = $value;
+                    }
+                }
+            }
+            break; // Berhenti setelah menemukan file .env valid pertama
+        }
+    }
+
+    // Fallback manual ke getenv jika beberapa variabel penting belum terisi
+    $fallbackKeys = ['DB_HOST', 'DB_PORT', 'DB_DATABASE', 'DB_USERNAME', 'DB_PASSWORD', 'APIKEY', 'PIN', 'SECRET_KEY'];
+    foreach ($fallbackKeys as $key) {
+        if (!isset($env[$key])) {
+            $val = getenv($key);
+            if ($val !== false) {
+                $env[$key] = $val;
             }
         }
     }
-    
-    // Normalisasi jalur file untuk pencocokan silang sistem operasi (Windows vs Linux)
-    $normalizedFileToRead = str_replace('\\', '/', realpath($fileToRead) ?: $fileToRead);
-    $isAllowed = false;
-    foreach ($allowedFiles as $allowed) {
-        $normalizedAllowed = str_replace('\\', '/', realpath($allowed) ?: $allowed);
-        if ($normalizedFileToRead === $normalizedAllowed) {
-            $isAllowed = true;
-            break;
-        }
-    }
-    
-    // Simulasi delay sedikit (350ms) agar efek animasi loading premium terlihat mulus
-    usleep(350000);
 
-    if (!$isAllowed || !file_exists($fileToRead) || !is_file($fileToRead)) {
-        echo json_encode(['error' => 'Akses ditolak atau file tidak ditemukan untuk dibaca.']);
+    return $env;
+}
+
+// Muat variabel lingkungan .env
+$envVariables = loadEnvironmentVariables();
+
+// Gabungkan variabel .env ke dalam $_SERVER jika belum diset oleh engine web server
+foreach ($envVariables as $key => $val) {
+    if (!isset($_SERVER[$key])) {
+        $_SERVER[$key] = $val;
+    }
+}
+
+// ===================================================
+// 0. SECURE AJAX SOURCE CODE & SECURE ENV ENDPOINTS
+// ===================================================
+if (isset($_GET['action'])) {
+    if (ob_get_length()) ob_clean();
+    header('Content-Type: application/json');
+    
+    // AJAX: Membaca isi file source code
+    if ($_GET['action'] === 'get_source' && isset($_GET['file'])) {
+        $fileToRead = $_GET['file'];
+        $lineToRead = isset($_GET['line']) ? (int)$_GET['line'] : 1;
+        
+        // Keamanan Ketat: Hanya izinkan membaca file yang benar-benar ada di dalam Stack Trace Exception
+        $allowedFiles = [];
+        if (isset($exception)) {
+            $allowedFiles[] = $exception->getFile();
+            foreach ($exception->getTrace() as $trace) {
+                if (isset($trace['file'])) {
+                    $allowedFiles[] = $trace['file'];
+                }
+            }
+        }
+        
+        $normalizedFileToRead = str_replace('\\', '/', realpath($fileToRead) ?: $fileToRead);
+        $isAllowed = false;
+        foreach ($allowedFiles as $allowed) {
+            $normalizedAllowed = str_replace('\\', '/', realpath($allowed) ?: $allowed);
+            if ($normalizedFileToRead === $normalizedAllowed) {
+                $isAllowed = true;
+                break;
+            }
+        }
+        
+        usleep(350000); // Simulasi delay untuk kelancaran visual loading skeleton
+
+        if (!$isAllowed || !file_exists($fileToRead) || !is_file($fileToRead)) {
+            echo json_encode(['error' => 'Akses ditolak atau file tidak ditemukan untuk dibaca.']);
+            exit;
+        }
+        
+        $lines = file($fileToRead);
+        if ($lines === false) {
+            echo json_encode(['error' => 'Gagal membuka & membaca isi file tersebut.']);
+            exit;
+        }
+        
+        $formattedLines = [];
+        foreach ($lines as $index => $content) {
+            $formattedLines[] = [
+                'number' => $index + 1,
+                'content' => rtrim($content)
+            ];
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'file' => basename($fileToRead),
+            'path' => $fileToRead,
+            'line' => $lineToRead,
+            'lines' => $formattedLines
+        ]);
         exit;
     }
-    
-    $lines = file($fileToRead);
-    if ($lines === false) {
-        echo json_encode(['error' => 'Gagal membuka & membaca isi file tersebut.']);
+
+    // AJAX: Mengambil nilai sensitif ENV/SERVER dengan verifikasi PIN
+    if ($_GET['action'] === 'get_env_value' && isset($_GET['key']) && isset($_GET['pin'])) {
+        $keyToReveal = $_GET['key'];
+        $inputPin = $_GET['pin'];
+        
+        // Cari nilai PIN yang sah dari konfigurasi $_SERVER atau .env
+        $actualPin = $_SERVER['PIN'] ?? $envVariables['PIN'] ?? null;
+        
+        if (empty($actualPin)) {
+            echo json_encode(['error' => 'Kunci pengaman "PIN" belum dikonfigurasi di berkas .env Anda.']);
+            exit;
+        }
+
+        if ($inputPin !== $actualPin) {
+            echo json_encode(['error' => 'PIN Keamanan salah! Akses ditolak.']);
+            exit;
+        }
+
+        if (!isset($_SERVER[$keyToReveal])) {
+            echo json_encode(['error' => 'Variabel tidak ditemukan di dalam konfigurasi server.']);
+            exit;
+        }
+
+        echo json_encode([
+            'success' => true,
+            'value' => $_SERVER[$keyToReveal]
+        ]);
         exit;
     }
-    
-    $formattedLines = [];
-    foreach ($lines as $index => $content) {
-        $formattedLines[] = [
-            'number' => $index + 1,
-            'content' => rtrim($content)
-        ];
-    }
-    
-    echo json_encode([
-        'success' => true,
-        'file' => basename($fileToRead),
-        'path' => $fileToRead,
-        'line' => $lineToRead,
-        'lines' => $formattedLines
-    ]);
-    exit;
 }
 
 // 1. Deteksi Otomatis Framework
@@ -316,9 +414,9 @@ foreach ($groupedTraces as $filePath => $group) {
                 </div>
                 <div>
                     <p class="text-xs text-slate-500 font-medium uppercase tracking-wider">OS & Web Server</p>
-                    <p class="text-sm font-semibold text-slate-200 truncate" title="<?= $os ?> / <?= $serverSoftware ?>">
+                    <div class="text-sm font-semibold text-slate-200 truncate" title="<?= $os ?> / <?= $serverSoftware ?>">
                         <div class="w-full h-[30px] overflow-hidden"><?= $os ?> <span class="text-slate-400 text-xs">/ <?= explode('/', $serverSoftware)[0] ?></span></div>
-                    </p>
+                    </div>
                 </div>
             </div>
         </section>
@@ -562,23 +660,61 @@ foreach ($groupedTraces as $filePath => $group) {
                     </div>
                 </div>
 
-                <!-- Tab: Variabel Server -->
-                <div id="content-servervars" class="tab-content hidden">
+                <!-- Tab: Variabel Server & Lingkungan Terproteksi -->
+                <div id="content-servervars" class="tab-content hidden space-y-8">
+                    
+                    <!-- UNIFIED SERVER & ENVIRONMENT VARIABLES TABLE -->
                     <div class="space-y-4">
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">Variabel Lingkungan Server ($_SERVER)</h3>
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono flex items-center gap-2">
+                                <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                </svg>
+                                Variabel Lingkungan Server ($_SERVER)
+                            </h3>
+                            <span class="text-[10px] bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2.5 py-0.5 rounded-full font-sans">
+                                Proteksi PIN Aktif
+                            </span>
+                        </div>
+                        
+                        <p class="text-xs text-slate-500">
+                            Menampilkan seluruh variabel lingkungan aktif dari array <code class="text-slate-400">$_SERVER</code> dan berkas <code class="text-slate-400">.env</code>. Variabel yang mengandung data sensitif (<code class="text-slate-400">DB_</code>, <code class="text-slate-400">APIKEY</code>, <code class="text-slate-400">PIN</code>, dan <code class="text-slate-400">SECRET_</code>) disembunyikan secara otomatis. Klik tombol mata untuk memasukkan PIN keamanan.
+                        </p>
+
                         <div class="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden">
                             <table class="w-full text-left font-mono text-xs divide-y divide-slate-800">
                                 <thead class="bg-slate-900/60 text-slate-400">
                                     <tr>
-                                        <th class="p-3">Kunci Parameter</th>
-                                        <th class="p-3">Nilai</th>
+                                        <th class="p-3 w-1/3">Kunci Parameter</th>
+                                        <th class="p-3">Nilai (Value)</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-800">
                                     <?php foreach ($_SERVER as $key => $val): ?>
-                                        <tr class="hover:bg-slate-900/40">
-                                            <td class="p-3 text-slate-400 border-r border-slate-800 w-1/3 break-all font-semibold"><?= escapeHtml($key) ?></td>
-                                            <td class="p-3 text-blue-400 break-all"><?= escapeHtml($val) ?></td>
+                                        <?php 
+                                        // Deteksi kunci sensitif (DB_, APIKEY, PIN, SECRET_ di awal kalimat)
+                                        $isSensitive = preg_match('/^(DB_|APIKEY|PIN|SECRET_)/i', $key);
+                                        ?>
+                                        <tr class="hover:bg-slate-900/30">
+                                            <td class="p-3 text-slate-400 border-r border-slate-800 break-all font-semibold"><?= escapeHtml($key) ?></td>
+                                            <td class="p-3">
+                                                <?php if ($isSensitive): ?>
+                                                    <div class="flex items-center justify-between gap-3">
+                                                        <!-- Tempat penampung nilai tersamar -->
+                                                        <span id="env-val-<?= escapeHtml($key) ?>" class="text-slate-500 select-all tracking-wider font-semibold font-mono">••••••••••••</span>
+                                                        
+                                                        <!-- Tombol Interaktif "Mata" -->
+                                                        <button id="env-btn-<?= escapeHtml($key) ?>" onclick="requestRevealEnv('<?= escapeHtml($key) ?>')" class="p-1.5 bg-slate-900 hover:bg-slate-800 text-rose-400 hover:text-rose-300 rounded-lg border border-slate-800 transition flex-shrink-0" title="Tampilkan Value Sensitif">
+                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                <?php else: ?>
+                                                    <span class="text-blue-400 break-all"><?= escapeHtml($val) ?></span>
+                                                <?php endif; ?>
+                                            </td>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>
@@ -678,6 +814,54 @@ foreach ($groupedTraces as $filePath => $group) {
             <div class="p-3 bg-slate-900/60 border-t border-slate-800 text-[10px] text-slate-500 font-mono flex flex-wrap justify-between gap-2">
                 <span>Gunakan Mousewheel untuk menjelajah file lengkap.</span>
                 <span id="code-modal-full-path" class="truncate max-w-xs md:max-w-md">Path: -</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- =======================================================
+    SECURITY SECURITY: PREMIUM COMPACT PIN VERIFICATION MODAL
+    ======================================================= -->
+    <div id="pin-verification-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm">
+        <div onclick="closePinVerification()" class="absolute inset-0"></div>
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl relative z-10 transform scale-95 transition-all duration-200">
+            
+            <!-- Header Modal Keamanan -->
+            <div class="flex items-center gap-3 border-b border-slate-800 pb-4 mb-4">
+                <div class="p-2 bg-rose-500/10 text-rose-400 rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                </div>
+                <div>
+                    <h3 class="text-slate-200 font-bold text-sm">Verifikasi Keamanan</h3>
+                    <p class="text-xs text-slate-500 font-sans">Variabel lingkungan terproteksi</p>
+                </div>
+            </div>
+
+            <!-- Body Input PIN -->
+            <div class="space-y-4 font-sans">
+                <div>
+                    <label for="security-pin-input" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">PIN Pengaman (.env)</label>
+                    <input type="password" id="security-pin-input" placeholder="••••" maxlength="12" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-center text-lg tracking-widest font-mono text-rose-400 focus:outline-none focus:border-rose-500/60 transition" />
+                </div>
+                
+                <!-- Label Pesan Kesalahan / Error Log -->
+                <div id="pin-error-container" class="hidden p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-start gap-2.5">
+                    <svg class="w-4 h-4 text-rose-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    <span id="pin-error-msg" class="text-xs text-rose-400 font-mono font-medium">Kesalahan autentikasi.</span>
+                </div>
+            </div>
+
+            <!-- Tombol Aksi Modal -->
+            <div class="flex items-center justify-end gap-3 mt-6 border-t border-slate-800 pt-4 font-sans">
+                <button onclick="closePinVerification()" class="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-slate-200 bg-slate-800/40 hover:bg-slate-800 rounded-lg transition">
+                    Batal
+                </button>
+                <button id="pin-submit-button" onclick="submitSecurityPin()" class="px-5 py-2 text-xs font-semibold bg-rose-500 hover:bg-rose-600 text-white rounded-lg transition flex items-center gap-2 shadow-lg shadow-rose-500/10">
+                    <span id="pin-btn-text">Verifikasi</span>
+                    <svg id="pin-btn-spinner" class="hidden animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </button>
             </div>
         </div>
     </div>
@@ -801,7 +985,6 @@ foreach ($groupedTraces as $filePath => $group) {
                         // Konten Baris Kode Kanan
                         const codePre = document.createElement('pre');
                         codePre.className = "flex-1 overflow-x-auto whitespace-pre";
-                        // Atur teks kode agar ter-escape aman
                         codePre.textContent = lineObj.content;
 
                         row.appendChild(numberSpan);
@@ -831,10 +1014,122 @@ foreach ($groupedTraces as $filePath => $group) {
             document.body.style.overflow = ''; // Kembalikan scroll halaman utama
         }
 
-        // Tutup modal secara otomatis ketika tombol "Escape" ditekan
+        // ============================================
+        // LOGIKA INTERAKTIF VERIFIKASI SENSITIF ENV PIN
+        // ============================================
+        let pendingRevealKey = null;
+
+        function requestRevealEnv(key) {
+            pendingRevealKey = key;
+            
+            const modal = document.getElementById('pin-verification-modal');
+            const pinInput = document.getElementById('security-pin-input');
+            const errorContainer = document.getElementById('pin-error-container');
+            
+            // Reset input modal
+            pinInput.value = '';
+            errorContainer.classList.add('hidden');
+            
+            // Tampilkan modal verifikasi PIN
+            modal.classList.remove('hidden');
+            pinInput.focus();
+        }
+
+        function closePinVerification() {
+            document.getElementById('pin-verification-modal').classList.add('hidden');
+            pendingRevealKey = null;
+        }
+
+        function submitSecurityPin() {
+            if (!pendingRevealKey) return;
+
+            const pinInput = document.getElementById('security-pin-input');
+            const errorContainer = document.getElementById('pin-error-container');
+            const errorMsg = document.getElementById('pin-error-msg');
+            const btnText = document.getElementById('pin-btn-text');
+            const btnSpinner = document.getElementById('pin-btn-spinner');
+            const submitBtn = document.getElementById('pin-submit-button');
+
+            const pinValue = pinInput.value.trim();
+
+            if (pinValue === '') {
+                errorContainer.classList.remove('hidden');
+                errorMsg.textContent = 'Silakan masukkan PIN pengaman terlebih dahulu.';
+                pinInput.focus();
+                return;
+            }
+
+            // Tampilkan state loading verifikasi
+            errorContainer.classList.add('hidden');
+            btnText.textContent = 'Memverifikasi...';
+            btnSpinner.classList.remove('hidden');
+            submitBtn.disabled = true;
+            pinInput.disabled = true;
+
+            const url = `?action=get_env_value&key=${encodeURIComponent(pendingRevealKey)}&pin=${encodeURIComponent(pinValue)}`;
+
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Gagal menghubungkan ke modul autentikasi server.');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+
+                    // Berhasil diverifikasi: Perbarui UI secara langsung
+                    const valueContainer = document.getElementById('env-val-' + pendingRevealKey);
+                    const eyeButton = document.getElementById('env-btn-' + pendingRevealKey);
+
+                    if (valueContainer) {
+                        valueContainer.textContent = data.value;
+                        valueContainer.className = "text-emerald-400 font-semibold break-all";
+                    }
+
+                    // Sembunyikan atau nonaktifkan tombol intip berkas karena sudah terbuka
+                    if (eyeButton) {
+                        eyeButton.disabled = true;
+                        eyeButton.className = "p-1.5 bg-slate-900 text-slate-700 rounded-lg border border-slate-950 cursor-not-allowed flex-shrink-0";
+                        eyeButton.innerHTML = `
+                            <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        `;
+                    }
+
+                    // Tutup modal
+                    closePinVerification();
+                })
+                .catch(err => {
+                    // Tampilkan pesan error pada modal
+                    errorContainer.classList.remove('hidden');
+                    errorMsg.textContent = err.message || 'Terjadi kesalahan sistem.';
+                    pinInput.focus();
+                })
+                .finally(() => {
+                    // Kembalikan status tombol verifikasi ke normal
+                    btnText.textContent = 'Verifikasi';
+                    btnSpinner.classList.add('hidden');
+                    submitBtn.disabled = false;
+                    pinInput.disabled = false;
+                });
+        }
+
+        // Jalankan verifikasi ketika menekan tombol "Enter" di dalam input PIN
+        document.getElementById('security-pin-input').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                submitSecurityPin();
+            }
+        });
+
+        // Tutup modal-modal interaktif ketika tombol "Escape" ditekan
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 closeCodeViewer();
+                closePinVerification();
             }
         });
     </script>
