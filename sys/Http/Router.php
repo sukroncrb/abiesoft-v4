@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Abiesoft\System\Http;
 
+use Abiesoft\App\Shared\Helpers\ApiResult;
 use Abiesoft\App\Shared\Middleware\ApiMiddleware;
 use Abiesoft\System\Auth\CsrfTokenAction;
 use Abiesoft\System\Auth\GetRefreshBearerTokenAction;
@@ -16,6 +17,8 @@ use Abiesoft\Testing\Testing;
 
 class Router
 {
+
+    use ApiResult;
     
     private array $routes = [];
     private string $groupPrefix = '';
@@ -89,43 +92,25 @@ class Router
         $matchedRoute = null;
         $params = [];
 
-        // 1. Cari route yang cocok (Dinamis / Statis)
+        // 1. Cari route yang cocok
         foreach ($routes as $routePath => $routeData) {
-            
-            // Ubah format {parameter} jadi Regex. Contoh: /api/csrf/{token}
             $pattern = preg_replace('/\{([a-zA-Z0-9_]+)\}/', '(?P<\1>[^/]+)', $routePath);
             $pattern = "#^" . $pattern . "$#";
 
             if (preg_match($pattern, $path, $matches)) {
                 $matchedRoute = $routeData;
-                
-                // Ambil parameter yang ditangkap regex (buang index angka)
                 $params = array_filter($matches, 'is_string', ARRAY_FILTER_USE_KEY);
                 break;
             }
         }
 
+        // PERBAIKAN 1: Jika route tidak ditemukan, throw Exception!
         if (!$matchedRoute) {
-
-            if ($_ENV['MODE'] == "develope") {
-                http_response_code(404);
-                echo "
-                    <div style='position: absolute; top: 0; right: 0; bottom: 0; left: 0; align-items: center; justify-content: center; display: flex; color: #bdbdbd; font-family: Arial;'>
-                        <div>
-                            <div style='text-align: center; font-size: 60pt;'>404</div>
-                            <div style='text-align: center; margin-top: 5px;'>Halaman Tidak Ditemukan</div>
-                        </div>
-                    </div>
-                ";
-                return;
-            }else{
-                header('Location: /'.$_ENV['LOGIN_PAGE']);
-            }
-
+            throw new \Abiesoft\System\Exception\HttpException("Halaman atau Endpoint '[$method] $path' Tidak Ditemukan", 404);
         }
 
         /*
-            Menambahkan middleware agar halaman bisa diatur hak akses usernya
+            Menambahkan middleware
         */
         foreach ($matchedRoute['middleware'] as $middlewareClass) {
             $middleware = new $middlewareClass();
@@ -136,44 +121,39 @@ class Router
         
         $actionClass = $matchedRoute['action'];
         
-        if (class_exists($actionClass)) {
-            $action = new $actionClass();
-            
-            if (method_exists($action, '__invoke')) {
-                
-                $reflector = new \ReflectionMethod($actionClass, '__invoke');
-                $parameters = $reflector->getParameters();
-                
-                $args = [];
-                
-                // 2. Injeksi ViewRenderer ATAU Parameter dari URL
-                foreach ($parameters as $param) {
-                    $paramName = $param->getName();
-                    $type = $param->getType();
-                    
-                    // Jika butuh ViewRenderer, berikan ViewRenderer
-                    if ($type && !$type->isBuiltin() && $type->getName() === ViewRenderer::class) {
-                        $args[] = new ViewRenderer();
-                    } 
-                    // Jika nama variabel cocok dengan parameter dinamis URL (contoh: $token)
-                    elseif (array_key_exists($paramName, $params)) {
-                        $args[] = $params[$paramName];
-                    } 
-                    // Jika tidak ada keduanya, set default value atau null
-                    else {
-                        $args[] = $param->isDefaultValueAvailable() ? $param->getDefaultValue() : null;
-                    }
-                }
-
-                $action(...$args);
-
-            } else {
-                echo "Error: Class $actionClass harus punya method __invoke()";
-            }
-            
-        } else {
-            echo "Error: Class $actionClass tidak ditemukan.";
+        // PERBAIKAN 2: Jika Action Class tidak ditemukan di folder App/System
+        if (!class_exists($actionClass)) {
+            throw new \Abiesoft\System\Exception\HttpException("Controller atau Action Class '$actionClass' tidak ditemukan di sistem AbieSoft.", 500);
         }
+
+        $action = new $actionClass();
+        
+        // PERBAIKAN 3: Jika Action Class ada tapi lupa membuat method __invoke
+        if (!method_exists($action, '__invoke')) {
+            throw new \Abiesoft\System\Exception\HttpException("Class '$actionClass' wajib memiliki method __invoke() sebagai entry point router.", 500);
+        }
+            
+        $reflector = new \ReflectionMethod($actionClass, '__invoke');
+        $parameters = $reflector->getParameters();
+        
+        $args = [];
+        
+        foreach ($parameters as $param) {
+            $paramName = $param->getName();
+            $type = $param->getType();
+            
+            if ($type && !$type->isBuiltin() && $type->getName() === ViewRenderer::class) {
+                $args[] = new ViewRenderer();
+            } 
+            elseif (array_key_exists($paramName, $params)) {
+                $args[] = $params[$paramName];
+            } 
+            else {
+                $args[] = $param->isDefaultValueAvailable() ? $param->getDefaultValue() : null;
+            }
+        }
+
+        $action(...$args);
     }
 
     protected function initApp() {

@@ -228,25 +228,38 @@ const app = {
             if(form.dataset.function){
                 if(typeof window[form.dataset.function] === "function"){
                     let formdata = new FormData(form);
-                    formdata.append('fid',form.id);
+
+                    let inputsToggle = form.querySelectorAll('input[type="checkbox"], input[type="radio"]');
+                    inputsToggle.forEach(input => {
+                        if (input.name) {
+                            if (!input.checked && !formdata.has(input.name)) {
+                                formdata.append(input.name, "off");
+                            } else if (input.checked) {
+                                if(formdata.get(input.name) === "on" || formdata.get(input.name) === ""){
+                                    formdata.set(input.name, "on");
+                                }
+                            }
+                        }
+                    });
+
+                    formdata.append('fid', form.id);
                     if(form.dataset.id){
-                        formdata.append('id',form.dataset.id);
+                        formdata.append('id', form.dataset.id);
                     }
                     if(form.dataset.uuid){
-                        formdata.append('uuid',form.dataset.uuid);
+                        formdata.append('uuid', form.dataset.uuid);
                     }
+
                     let forVerify = form.querySelectorAll('[data-validasi]');
                     for(let i=0; i<forVerify.length; i++){
-                        
                         if(typeof this[forVerify[i].dataset.validasi] === "function"){
                             let validasi = this[forVerify[i].dataset.validasi](forVerify[i]);
                             if(validasi != ""){
-                                this.showToast(validasi,"error");
+                                this.showToast(validasi, "error");
                                 forVerify[i].focus();
                                 return false;
                             }
                         }
-                        
                     }
                     window[form.dataset.function](formdata, form);
                 }
@@ -723,6 +736,8 @@ function perbaruiToken() {
 function csrfToken(form, fc) {
     if(form){
         let forms = document.querySelector('[data-form="'+form+'"]');
+        if(!forms) return;
+
         getData('csrf/'+forms.dataset.form).then(result => {
             if(forms.dataset.form.includes("hapus")){
                 forms.setAttribute('id', result.data.fid);
@@ -737,12 +752,18 @@ function csrfToken(form, fc) {
                 localStorage.setItem(result.data.fid, result.data.csrf);
             }else{
                 forms.setAttribute('id', result.data.fid);
-                let csrfInput = document.createElement('input');
-                csrfInput.type = 'hidden';
-                csrfInput.name = '__csrf';
-                csrfInput.value = result.data.csrf;
                 localStorage.setItem(result.data.fid, result.data.csrf);
-                forms.insertBefore(csrfInput, forms.children[forms.children.length - 1]); // Menambahkan sebelum tombol submit
+
+                let existingCsrf = forms.querySelector('input[name="__csrf"]');
+                if(existingCsrf) {
+                    existingCsrf.value = result.data.csrf;
+                } else {
+                    let csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = '__csrf';
+                    csrfInput.value = result.data.csrf;
+                    forms.insertBefore(csrfInput, forms.children[forms.children.length - 1]);
+                }
             }
             if(typeof window[fc] === "function"){
                 window[fc]();
@@ -767,12 +788,18 @@ function csrfToken(form, fc) {
                         app.toSubmit(forms[i]);
                     }else{
                         forms[i].setAttribute('id', result.data.fid);
-                        let csrfInput = document.createElement('input');
-                        csrfInput.type = 'hidden';
-                        csrfInput.name = '__csrf';
-                        csrfInput.value = result.data.csrf;
                         localStorage.setItem(result.data.fid, result.data.csrf);
-                        forms[i].insertBefore(csrfInput, forms[i].children[forms[i].children.length - 1]); // Menambahkan sebelum tombol submit
+
+                        let existingCsrf = forms[i].querySelector('input[name="__csrf"]');
+                        if(existingCsrf) {
+                            existingCsrf.value = result.data.csrf;
+                        } else {
+                            let csrfInput = document.createElement('input');
+                            csrfInput.type = 'hidden';
+                            csrfInput.name = '__csrf';
+                            csrfInput.value = result.data.csrf;
+                            forms[i].insertBefore(csrfInput, forms[i].children[forms[i].children.length - 1]);
+                        }
                         app.toSubmit(forms[i]);
                     }
                 });

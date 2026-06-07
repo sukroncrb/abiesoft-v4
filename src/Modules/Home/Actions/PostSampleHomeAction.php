@@ -16,11 +16,12 @@ readonly class PostSampleHomeAction
     {
         $input = new Input();
         $repo = new WellcomeRepository();
-        if($input->get("tech") == "on") {
-            $_POST['tech'] == "golang";
+        $tech = $input->get("tech", "PHP");
+        if ($tech === "on" || strtolower($tech) === "golang") {
+            $_POST['tech'] = "Golang"; 
             $repo->postSampleDataWithGolang();
-        }else{
-            $_POST['tech'] == "php";
+        } else {
+            $_POST['tech'] = "PHP"; 
             $repo->postSampleDataWithPhp();
         }
     }

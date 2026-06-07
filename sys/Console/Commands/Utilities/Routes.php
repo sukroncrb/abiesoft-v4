@@ -22,7 +22,7 @@ trait Routes
 
         $router = new \Abiesoft\System\Http\Router();
 
-        $routesPath = __DIR__ . '/../../routes/web.php';
+        $routesPath = __DIR__ . '/../../../../routes/web.php';
         
         if (file_exists($routesPath)) {
             require_once $routesPath;

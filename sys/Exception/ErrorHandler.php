@@ -8,13 +8,8 @@ class ErrorHandler
 {
     public static function register(): void
     {
-        // Tangkap Exception yang tidak ditangkap oleh try-catch
         set_exception_handler([self::class, 'handleException']);
-
-        // Tangkap Error standar PHP (Warning, Notice, dll)
         set_error_handler([self::class, 'handleError']);
-
-        // Tangkap Fatal Error saat aplikasi shutdown
         register_shutdown_function([self::class, 'handleShutdown']);
     }
 
@@ -25,7 +20,6 @@ class ErrorHandler
 
     public static function handleError(int $level, string $message, string $file, int $line): void
     {
-        // Ubah error standar PHP menjadi ErrorException agar bisa diproses sebagai Throwable
         if (error_reporting() & $level) {
             self::renderErrorPage(new \ErrorException($message, 0, $level, $file, $line));
         }
@@ -48,13 +42,38 @@ class ErrorHandler
 
     private static function renderErrorPage(Throwable $exception): void
     {
-        // Bersihkan output buffer jika ada isi halaman yang terlanjur bocor
+
         if (ob_get_length()) {
             ob_clean();
         }
 
-        // Cek mode aplikasi dari .env (jika production, sembunyikan detail error)
-        $isDevelopment = ($_ENV['APP_MODE'] ?? 'develop') === 'develop';
+        $isDevelopment = ($_ENV['MODE'] ?? 'develope') === 'develope';
+        $isJsonRequest = self::shouldReturnJson();
+
+        if ($isJsonRequest) {
+            header('Content-Type: application/json');
+            header($_SERVER["SERVER_PROTOCOL"] . " 500 Internal Server Error");
+
+            if (!$isDevelopment) {
+                echo json_encode([
+                    'status' => 'error',
+                    'msg'    => 'Internal Server Error',
+                    'data'   => null
+                ]);
+            } else {
+                echo json_encode([
+                    'status' => 'error',
+                    'msg'    => $exception->getMessage(),
+                    'data'   => [
+                        'exception' => get_class($exception),
+                        'file'      => $exception->getFile(),
+                        'line'      => $exception->getLine(),
+                        'trace'     => array_slice($exception->getTrace(), 0, 5)
+                    ]
+                ]);
+            }
+            exit;
+        }
 
         if (!$isDevelopment) {
             header($_SERVER["SERVER_PROTOCOL"] . " 500 Internal Server Error");
@@ -62,8 +81,24 @@ class ErrorHandler
             exit;
         }
 
-        // Tampilan Error ala Laravel/Symfony (Gunakan template HTML bawaan)
         include __DIR__ . '/templates/error_view.php';
         exit;
+    }
+
+    private static function shouldReturnJson(): bool
+    {
+        if (isset($_SERVER['HTTP_ACCEPT']) && str_contains(strtolower($_SERVER['HTTP_ACCEPT']), 'application/json')) {
+            return true;
+        }
+
+        if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+            return true;
+        }
+
+        if (isset($_SERVER['REQUEST_URI']) && str_contains(strtolower($_SERVER['REQUEST_URI']), '/api/')) {
+            return true;
+        }
+
+        return false;
     }
 }

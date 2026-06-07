@@ -100,7 +100,6 @@ class WellcomeRepository extends Service
         $tech = "PHP";
         $id = $input->get('id');
         $method = $input->get('__method');
-        $uuid = $this->uidV4();
         if($id != ""){
             if($method == "DELETE"){
                 $hapus = $db->hapus("sample", ['id','=',$id]);
