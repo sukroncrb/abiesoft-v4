@@ -12,6 +12,6 @@ readonly class Testing
     use PiGoCaller;
     public function __invoke()
     {
-        print_r($this->call("wellcome"));
+        //
     }
 }

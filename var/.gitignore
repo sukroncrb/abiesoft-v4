@@ -1,0 +1,5 @@
+# Mengabaikan semua isi di dalam folder ini
+*
+
+# Jangan abaikan file .gitignore ini sendiri
+!.gitignore
