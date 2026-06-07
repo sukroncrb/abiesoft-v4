@@ -6,5 +6,5 @@
 4. Mengupdate composer untuk library php dengan perintah <pre><code>composer update</code></pre>
 5. Build binary golang dengan perintah <pre><code>php abiesoft build</code></pre>
 6. Mengimport database dengan <pre><code>php abiesoft database:import</code></pre>
-7. Sebelum menjalankan aplikasi pastikan folder <code>var</code> sudah ada di root folder (Bukan Public Root Folder), jika belum ada buat folder kosong bernama var
+7. Sebelum menjalankan aplikasi pastikan folder <code>var</code> sudah ada di root folder (Bukan Public Root Folder), jika belum ada buat folder kosong bernama var yang fungsinya untuk menyimpan cache yang dibutuhkan oleh template engine latte, karena abiesoft menggunakan template engine latte.
 8. Menjalankan aplikasi <pre><code>php abiesoft start</code></pre>
