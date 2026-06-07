@@ -6,4 +6,5 @@
 4. Mengupdate composer untuk library php dengan perintah <code>composer update</code>
 5. Build binary golang dengan perintah <code>php abiesoft build</code>
 6. Mengimport database dengan <code>php abiesoft database:import</code>
-7. Menjalankan aplikasi <code>php abiesoft start</code>
+7. Sebelum menjalankan aplikasi pastikan folder <code>var</code> sudah ada di root folder (Bukan Public Root Folder), jika belum ada buat folder kosong bernama var
+8. Menjalankan aplikasi <code>php abiesoft start</code>
