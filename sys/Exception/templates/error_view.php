@@ -2,9 +2,74 @@
 /**
  * Elegant & Modern Exception Template
  * Fitur: Deteksi otomatis framework, variabel lingkungan,
- * pengelompokan stack trace berdasarkan Kategori (User, Abiesoft, Pihak Ke-3) 
- * dan File (sistem dropdown), serta detail diagnostik lengkap.
+ * pengelompokan stack trace berdasarkan Kategori (User, Abiesoft, Pihak Ke-3),
+ * sistem dropdown, dan Live Code Viewer Popup dengan animasi loading.
  */
+
+// ==========================================
+// 0. SECURE AJAX SOURCE CODE READER ENDPOINT
+// ==========================================
+if (isset($_GET['action']) && $_GET['action'] === 'get_source' && isset($_GET['file'])) {
+    // Bersihkan buffer output sebelumnya agar respon murni JSON
+    if (ob_get_length()) ob_clean();
+    header('Content-Type: application/json');
+    
+    $fileToRead = $_GET['file'];
+    $lineToRead = isset($_GET['line']) ? (int)$_GET['line'] : 1;
+    
+    // Keamanan Ketat: Hanya izinkan membaca file yang benar-benar ada di dalam Stack Trace Exception ini
+    $allowedFiles = [];
+    if (isset($exception)) {
+        $allowedFiles[] = $exception->getFile();
+        foreach ($exception->getTrace() as $trace) {
+            if (isset($trace['file'])) {
+                $allowedFiles[] = $trace['file'];
+            }
+        }
+    }
+    
+    // Normalisasi jalur file untuk pencocokan silang sistem operasi (Windows vs Linux)
+    $normalizedFileToRead = str_replace('\\', '/', realpath($fileToRead) ?: $fileToRead);
+    $isAllowed = false;
+    foreach ($allowedFiles as $allowed) {
+        $normalizedAllowed = str_replace('\\', '/', realpath($allowed) ?: $allowed);
+        if ($normalizedFileToRead === $normalizedAllowed) {
+            $isAllowed = true;
+            break;
+        }
+    }
+    
+    // Simulasi delay sedikit (350ms) agar efek animasi loading premium terlihat mulus
+    usleep(350000);
+
+    if (!$isAllowed || !file_exists($fileToRead) || !is_file($fileToRead)) {
+        echo json_encode(['error' => 'Akses ditolak atau file tidak ditemukan untuk dibaca.']);
+        exit;
+    }
+    
+    $lines = file($fileToRead);
+    if ($lines === false) {
+        echo json_encode(['error' => 'Gagal membuka & membaca isi file tersebut.']);
+        exit;
+    }
+    
+    $formattedLines = [];
+    foreach ($lines as $index => $content) {
+        $formattedLines[] = [
+            'number' => $index + 1,
+            'content' => rtrim($content)
+        ];
+    }
+    
+    echo json_encode([
+        'success' => true,
+        'file' => basename($fileToRead),
+        'path' => $fileToRead,
+        'line' => $lineToRead,
+        'lines' => $formattedLines
+    ]);
+    exit;
+}
 
 // 1. Deteksi Otomatis Framework
 $frameworkName = 'abiesoft v.4';
@@ -128,12 +193,11 @@ foreach ($groupedTraces as $filePath => $group) {
     $normalizedPath = str_replace('\\', '/', $filePath);
     
     // Aturan filter Kode buatan User sendiri:
-    // Harus berada di folder "src/modules", bukan file "handler.go", dan bukan di folder "templates"
     $isUserCode = (strpos($normalizedPath, 'src/modules/') !== false) 
                   && (strpos($normalizedPath, 'handler.go') === false) 
                   && (strpos($normalizedPath, '/templates/') === false);
 
-    // Aturan filter Sistem Abiesoft: mengandung namespace/folder "Abiesoft"
+    // Aturan filter Sistem Abiesoft:
     $isAbiesoftSystem = (stripos($normalizedPath, 'abiesoft') !== false);
 
     if ($isUserCode) {
@@ -170,7 +234,7 @@ foreach ($groupedTraces as $filePath => $group) {
         }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-200 font-sans antialiased min-h-screen flex flex-col selection:bg-rose-500/30 selection:text-rose-200">
+<body class="bg-slate-950 text-slate-200 font-sans antialiased min-h-screen flex flex-col selection:bg-rose-500/30 selection:text-rose-200 relative">
 
     <div class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-8 space-y-6">
         
@@ -193,11 +257,17 @@ foreach ($groupedTraces as $filePath => $group) {
                     <?= escapeHtml($exception->getMessage()) ?>
                 </h1>
                 
-                <div class="mt-4 flex flex-wrap items-center text-sm text-slate-400 gap-2 font-mono bg-slate-950/50 p-3 rounded-lg border border-slate-800">
-                    <span class="text-slate-500">File Utama:</span>
-                    <span class="text-slate-200 break-all"><?= escapeHtml($exception->getFile()) ?></span>
-                    <span class="text-slate-500">pada baris</span>
-                    <span class="text-rose-400 font-bold bg-rose-500/10 px-2 py-0.5 rounded"><?= $exception->getLine() ?></span>
+                <div class="mt-4 flex flex-wrap items-center text-sm text-slate-400 gap-2 font-mono bg-slate-950/50 p-3 rounded-lg border border-slate-800 justify-between">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="text-slate-500">File Utama:</span>
+                        <span class="text-slate-200 break-all"><?= escapeHtml($exception->getFile()) ?></span>
+                        <span class="text-slate-500">pada baris</span>
+                        <span class="text-rose-400 font-bold bg-rose-500/10 px-2 py-0.5 rounded"><?= $exception->getLine() ?></span>
+                    </div>
+                    <button onclick="openCodeViewer(<?= escapeHtml(json_encode($exception->getFile())) ?>, <?= (int)$exception->getLine() ?>)" class="flex items-center gap-1.5 text-xs bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white px-3 py-1.5 rounded-lg transition border border-rose-500/30 font-sans font-semibold">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                        Intip Kode Pemicu
+                    </button>
                 </div>
             </div>
         </header>
@@ -246,9 +316,9 @@ foreach ($groupedTraces as $filePath => $group) {
                 </div>
                 <div>
                     <p class="text-xs text-slate-500 font-medium uppercase tracking-wider">OS & Web Server</p>
-                    <div class="text-sm font-semibold text-slate-200 truncate" title="<?= $os ?> / <?= $serverSoftware ?>">
+                    <p class="text-sm font-semibold text-slate-200 truncate" title="<?= $os ?> / <?= $serverSoftware ?>">
                         <div class="w-full h-[30px] overflow-hidden"><?= $os ?> <span class="text-slate-400 text-xs">/ <?= explode('/', $serverSoftware)[0] ?></span></div>
-                    </div>
+                    </p>
                 </div>
             </div>
         </section>
@@ -275,19 +345,21 @@ foreach ($groupedTraces as $filePath => $group) {
                 <div id="content-stacktrace" class="tab-content block space-y-6">
                     
                     <!-- Eksekusi Utama (Garis Teratas Triger Error) -->
-                    <div class="p-4 bg-rose-950/10 border-l-4 border-rose-500/80 hover:bg-rose-950/20 transition rounded-md">
-                        <div class="flex items-center gap-2">
-                            <span class="text-rose-400 font-bold text-xs bg-rose-500/10 px-2 py-0.5 rounded">ALUR EKSEKUSI UTAMA</span>
+                    <div class="p-4 bg-rose-950/10 border-l-4 border-rose-500/80 hover:bg-rose-950/20 transition rounded-md flex justify-between items-center">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-rose-400 font-bold text-xs bg-rose-500/10 px-2 py-0.5 rounded">ALUR EKSEKUSI UTAMA</span>
+                            </div>
+                            <p class="text-slate-200 mt-2 font-mono text-xs md:text-sm break-all">
+                                <?= escapeHtml($exception->getFile()) ?> : <span class="text-rose-400 font-semibold"><?= $exception->getLine() ?></span>
+                            </p>
                         </div>
-                        <p class="text-slate-200 mt-2 font-mono text-xs md:text-sm break-all">
-                            <?= escapeHtml($exception->getFile()) ?> : <span class="text-rose-400 font-semibold"><?= $exception->getLine() ?></span>
-                        </p>
                     </div>
 
                     <!-- Iterasi Kategori (User -> Abiesoft -> Vendor) -->
                     <?php 
                     $globalGroupIndex = 0; 
-                    $isFirstFileOverall = true; // Penanda agar HANYA file paling pertama di stack trace yang terbuka otomatis
+                    $isFirstFileOverall = true; 
                     ?>
                     <?php foreach ($categorizedTraces as $categoryKey => $category): ?>
                         <div class="space-y-3">
@@ -313,7 +385,7 @@ foreach ($groupedTraces as $filePath => $group) {
                                         <?php 
                                         $globalGroupIndex++; 
                                         $isInitiallyOpen = $isFirstFileOverall; 
-                                        $isFirstFileOverall = false; // Setelah yang pertama diproses, set ke false
+                                        $isFirstFileOverall = false;
                                         ?>
                                         <div class="bg-slate-900/40 border border-slate-800/80 rounded-xl overflow-hidden transition duration-200">
                                             
@@ -322,13 +394,10 @@ foreach ($groupedTraces as $filePath => $group) {
                                                 <div class="flex items-center gap-3 min-w-0 pr-4">
                                                     <!-- Icon File Sesuai Kategori -->
                                                     <?php if ($categoryKey === 'user'): ?>
-                                                        <!-- Icon User (Code Bracket) -->
                                                         <svg class="w-5 h-5 text-rose-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
                                                     <?php elseif ($categoryKey === 'abiesoft'): ?>
-                                                        <!-- Icon Shield/Core -->
                                                         <svg class="w-5 h-5 text-indigo-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
                                                     <?php else: ?>
-                                                        <!-- Icon Package (Vendor) -->
                                                         <svg class="w-5 h-5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
                                                     <?php endif; ?>
 
@@ -356,7 +425,7 @@ foreach ($groupedTraces as $filePath => $group) {
                                                             <!-- Indikator Bulat Timeline -->
                                                             <div class="absolute -left-[22px] top-1.5 w-2.5 h-2.5 rounded-full bg-<?= $category['color'] ?>-500 border-2 border-slate-950 shadow-sm"></div>
                                                             
-                                                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+                                                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                                                 <div class="font-mono text-xs md:text-sm">
                                                                     <div class="flex items-center gap-2 flex-wrap">
                                                                         <span class="text-blue-500 font-bold text-[10px] bg-blue-500/10 px-2 py-0.5 rounded">STACK #<?= $trace['original_index'] ?></span>
@@ -375,14 +444,24 @@ foreach ($groupedTraces as $filePath => $group) {
                                                                     </div>
                                                                 </div>
                                                                 
-                                                                <!-- Tombol Tampil Argumen jika ada -->
-                                                                <?php if (isset($trace['args']) && !empty($trace['args'])): ?>
-                                                                    <div class="flex-shrink-0">
+                                                                <!-- Tombol Tampil Detail / Intip Kode -->
+                                                                <div class="flex items-center gap-2 flex-wrap flex-shrink-0">
+                                                                    <?php if (isset($trace['args']) && !empty($trace['args'])): ?>
                                                                         <button onclick="toggleArgs('args-<?= $trace['original_index'] ?>')" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold px-2.5 py-1 rounded transition border border-slate-700 font-sans">
                                                                             Detail Argumen
                                                                         </button>
-                                                                    </div>
-                                                                <?php endif; ?>
+                                                                    <?php endif; ?>
+                                                                    
+                                                                    <!-- Tombol Live Code View Popup -->
+                                                                    <?php if ($filePath !== 'Internal PHP Call' && $trace['line'] !== '?'): ?>
+                                                                        <button onclick="openCodeViewer(<?= htmlspecialchars(json_encode($filePath), ENT_QUOTES, 'UTF-8') ?>, <?= (int)$trace['line'] ?>)" class="flex items-center gap-1 text-[11px] bg-slate-800 hover:bg-rose-500/20 hover:text-rose-400 hover:border-rose-500/30 text-rose-300 font-semibold px-2.5 py-1 rounded transition border border-slate-700 font-sans">
+                                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                                                                            </svg>
+                                                                            Lihat Kode
+                                                                        </button>
+                                                                    <?php endif; ?>
+                                                                </div>
                                                             </div>
 
                                                             <!-- Panel Preview Data Argumen (Diproses Secara Aman) -->
@@ -512,6 +591,97 @@ foreach ($groupedTraces as $filePath => $group) {
         </main>
     </div>
 
+    <!-- ==============================================
+    EXTRA PREMIUM UI: LIVE SOURCE CODE VIEWER POPUP
+    ============================================== -->
+    <div id="code-viewer-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6 bg-slate-950/80 backdrop-blur-sm transition-opacity duration-300">
+        <!-- Backdrop Close Click -->
+        <div onclick="closeCodeViewer()" class="absolute inset-0 cursor-default"></div>
+        
+        <!-- Modal Content Box -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-5xl h-[85vh] flex flex-col shadow-2xl relative z-10 overflow-hidden transform scale-95 transition-transform duration-300">
+            <!-- Modal Header -->
+            <div class="p-4 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md flex items-center justify-between">
+                <div class="min-w-0 flex-1">
+                    <span class="text-slate-500 text-[10px] font-mono uppercase tracking-wider block">Intip Berkas Kode (Hanya-Baca)</span>
+                    <h3 id="code-modal-filename" class="text-slate-200 font-semibold font-mono text-xs md:text-sm truncate pr-2">NamaFile.php</h3>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span id="code-modal-line-badge" class="hidden text-xs bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2.5 py-1 rounded-md font-mono">
+                        Baris: -
+                    </span>
+                    <button onclick="closeCodeViewer()" class="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-lg transition" title="Tutup">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body Container (Scrollable) -->
+            <div class="flex-1 overflow-auto bg-slate-950 p-4 md:p-6 relative">
+                
+                <!-- PRESET 1: LOADING SKELETON LAYER -->
+                <div id="code-modal-loading" class="absolute inset-0 bg-slate-950 z-20 flex flex-col p-6 space-y-4 animate-pulse">
+                    <div class="h-4 bg-slate-900 rounded-lg w-1/4"></div>
+                    <div class="space-y-2 pt-4">
+                        <div class="grid grid-cols-12 gap-4">
+                            <div class="h-3 bg-slate-900 rounded col-span-1"></div>
+                            <div class="h-3 bg-slate-900 rounded col-span-8"></div>
+                        </div>
+                        <div class="grid grid-cols-12 gap-4">
+                            <div class="h-3 bg-slate-900 rounded col-span-1"></div>
+                            <div class="h-3 bg-slate-900 rounded col-span-11"></div>
+                        </div>
+                        <div class="grid grid-cols-12 gap-4 bg-rose-950/20 py-1.5 rounded-lg">
+                            <div class="h-3 bg-rose-500/30 rounded col-span-1"></div>
+                            <div class="h-3 bg-rose-500/30 rounded col-span-10"></div>
+                        </div>
+                        <div class="grid grid-cols-12 gap-4">
+                            <div class="h-3 bg-slate-900 rounded col-span-1"></div>
+                            <div class="h-3 bg-slate-900 rounded col-span-9"></div>
+                        </div>
+                        <div class="grid grid-cols-12 gap-4">
+                            <div class="h-3 bg-slate-900 rounded col-span-1"></div>
+                            <div class="h-3 bg-slate-900 rounded col-span-6"></div>
+                        </div>
+                        <div class="grid grid-cols-12 gap-4">
+                            <div class="h-3 bg-slate-900 rounded col-span-1"></div>
+                            <div class="h-3 bg-slate-900 rounded col-span-11"></div>
+                        </div>
+                    </div>
+                    <!-- Spinner Tengah -->
+                    <div class="absolute inset-0 flex flex-col items-center justify-center space-y-3 bg-slate-950/40">
+                        <svg class="animate-spin h-8 w-8 text-rose-500" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span class="text-xs text-slate-400 font-mono">Membuka berkas kode di server...</span>
+                    </div>
+                </div>
+
+                <!-- PRESET 2: ERROR LAYER -->
+                <div id="code-modal-error" class="hidden absolute inset-0 bg-slate-950 z-20 flex flex-col items-center justify-center p-6 text-center">
+                    <div class="p-3 bg-rose-500/10 text-rose-500 rounded-full mb-3">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    </div>
+                    <h4 class="text-sm font-bold text-slate-200">Gagal Menampilkan Kode</h4>
+                    <p id="code-modal-error-msg" class="text-xs text-slate-400 font-mono mt-1 max-w-md">Kesalahan tidak diketahui.</p>
+                </div>
+
+                <!-- PRESET 3: REAL CODE VIEW (RENDERED LINES) -->
+                <div id="code-view-container" class="font-mono text-xs md:text-sm select-text w-full h-full">
+                    <div id="code-view-lines" class="space-y-0.5"></div>
+                </div>
+
+            </div>
+
+            <!-- Modal Footer Info -->
+            <div class="p-3 bg-slate-900/60 border-t border-slate-800 text-[10px] text-slate-500 font-mono flex flex-wrap justify-between gap-2">
+                <span>Gunakan Mousewheel untuk menjelajah file lengkap.</span>
+                <span id="code-modal-full-path" class="truncate max-w-xs md:max-w-md">Path: -</span>
+            </div>
+        </div>
+    </div>
+
     <!-- Halaman Footer -->
     <footer class="w-full text-center py-6 border-t border-slate-900 text-[11px] text-slate-600 font-mono text-sm mb-8 select-none">
         Diagnostik Error @abiesoft &bull; Waktu Saat Ini: <?php echo date('Y-m-d H:i:s'); ?>
@@ -561,6 +731,112 @@ foreach ($groupedTraces as $filePath => $group) {
                 }
             }
         }
+
+        // ===========================================
+        // INTERACTIVE POPUP CODE VIEWER HANDLERS (JS)
+        // ===========================================
+        let activeScrollTimeout = null;
+
+        function openCodeViewer(filePath, lineTarget) {
+            const modal = document.getElementById('code-viewer-modal');
+            const loadingLayer = document.getElementById('code-modal-loading');
+            const errorLayer = document.getElementById('code-modal-error');
+            const codeContainer = document.getElementById('code-view-container');
+            const linesWrapper = document.getElementById('code-view-lines');
+            const titleEl = document.getElementById('code-modal-filename');
+            const fullPathEl = document.getElementById('code-modal-full-path');
+            const lineBadge = document.getElementById('code-modal-line-badge');
+
+            // Reset UI States
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; // Kunci scroll halaman utama
+            loadingLayer.classList.remove('hidden');
+            errorLayer.classList.add('hidden');
+            codeContainer.classList.add('hidden');
+            linesWrapper.innerHTML = '';
+            
+            titleEl.textContent = "Sedang Membaca...";
+            fullPathEl.textContent = filePath;
+            lineBadge.classList.add('hidden');
+
+            // Eksekusi AJAX Request ke Endpoint PHP Aman di Atas
+            const url = `?action=get_source&file=${encodeURIComponent(filePath)}&line=${lineTarget}`;
+            
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Gagal melakukan permintaan data.");
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+
+                    // Sembunyikan loading, perbarui header info
+                    loadingLayer.classList.add('hidden');
+                    codeContainer.classList.remove('hidden');
+                    titleEl.textContent = data.file;
+                    fullPathEl.textContent = data.path;
+                    
+                    lineBadge.textContent = "Baris: " + data.line;
+                    lineBadge.classList.remove('hidden');
+
+                    // Bangun & Render Elemen Baris Kode secara Dinamis
+                    data.lines.forEach(lineObj => {
+                        const isTarget = (lineObj.number === parseInt(data.line));
+                        
+                        const row = document.createElement('div');
+                        row.className = `flex font-mono text-[11px] md:text-xs py-0.5 border-l-4 transition-all duration-300 ${isTarget ? 'bg-rose-950/40 border-rose-500 text-rose-100 pl-2' : 'border-transparent text-slate-300 hover:bg-slate-900/60 pl-2'}`;
+                        if (isTarget) {
+                            row.id = "target-error-line";
+                        }
+
+                        // Nomor Baris Kiri
+                        const numberSpan = document.createElement('span');
+                        numberSpan.className = `w-12 text-right pr-4 select-none font-semibold ${isTarget ? 'text-rose-400' : 'text-slate-600'}`;
+                        numberSpan.textContent = lineObj.number;
+
+                        // Konten Baris Kode Kanan
+                        const codePre = document.createElement('pre');
+                        codePre.className = "flex-1 overflow-x-auto whitespace-pre";
+                        // Atur teks kode agar ter-escape aman
+                        codePre.textContent = lineObj.content;
+
+                        row.appendChild(numberSpan);
+                        row.appendChild(codePre);
+                        linesWrapper.appendChild(row);
+                    });
+
+                    // Auto-Scroll presisi ke arah baris yang memicu error
+                    if (activeScrollTimeout) clearTimeout(activeScrollTimeout);
+                    activeScrollTimeout = setTimeout(() => {
+                        const targetEl = document.getElementById("target-error-line");
+                        if (targetEl) {
+                            targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }, 120);
+                })
+                .catch(err => {
+                    loadingLayer.classList.add('hidden');
+                    codeContainer.classList.add('hidden');
+                    errorLayer.classList.remove('hidden');
+                    document.getElementById('code-modal-error-msg').textContent = err.message || "Gagal menghubungkan ke server.";
+                });
+        }
+
+        function closeCodeViewer() {
+            document.getElementById('code-viewer-modal').classList.add('hidden');
+            document.body.style.overflow = ''; // Kembalikan scroll halaman utama
+        }
+
+        // Tutup modal secara otomatis ketika tombol "Escape" ditekan
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeCodeViewer();
+            }
+        });
     </script>
 </body>
 </html>
