@@ -1,4 +1,6 @@
 # abiesoft-4.0
+### Apa itu abiesoft?
+AbieSoft adalah framework hybrid yang menggunakan bahasa php, golang, javascript dan engine template latte. Abiesoft menggunakan arsitektur Action-Domain-Responder (ADR) dengan sistem Hybrid Engine berbasis Unix Socket.
 ### Instalasi
 1. Download file **abiesoft-v4.zip**, kemudian extract zip. atau menggunakan <pre><code>git clone https://github.com/sukroncrb/abiesoft-v4.git</code></pre>
 2. Buat file <code>.env</code> ambil template codenya dari <code>env_Sample</code> seting pengaturan yang dibutuhkan di .env seperti konfigurasi database, apikey dan secretkey
