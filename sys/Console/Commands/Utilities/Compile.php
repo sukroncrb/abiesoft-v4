@@ -21,7 +21,11 @@ trait Compile
 
         $fullOutputPath = $root . "/" . $outputPath;
         
-        $arch = $_ENV['ARCH_OS'] ?? 'amd64';
+        
+        $arch = isset($_ENV['ARCH_OS']) ? trim((string)$_ENV['ARCH_OS']) : 'amd64';
+        if (empty($arch)) {
+            $arch = 'amd64';
+        }
 
         echo "\n\e[34m--- AbieSoft Framework Build System ---\e[0m\n";
 
@@ -38,21 +42,22 @@ trait Compile
             2 => ["pipe", "w"] 
         ];
 
-        if ($isWindows) {
-            
-            $cmd = "cd " . escapeshellarg($root) . " && go mod tidy && set GOARCH=$arch && go build -o " . escapeshellarg($outputPath) . " " . escapeshellarg($sourcePath);
-        } else {
-            
-            $cmd = "cd " . escapeshellarg($root) . " && go mod tidy && GOOS=linux GOARCH=" . escapeshellarg($arch) . " go build -o " . escapeshellarg($outputPath) . " " . escapeshellarg($sourcePath);
-        }
+        
+        $cmd = "cd " . escapeshellarg($root) . " && go mod tidy && go build -o " . escapeshellarg($outputPath) . " " . escapeshellarg($sourcePath);
 
-        $process = proc_open($cmd, $descriptorspec, $pipes);
+        
+        $envVars = array_merge($_ENV, getenv(), [
+            'GOOS'   => $isWindows ? 'windows' : 'linux',
+            'GOARCH' => $arch
+        ]);
+
+        
+        $process = proc_open($cmd, $descriptorspec, $pipes, $root, $envVars);
 
         if (is_resource($process)) {
             stream_set_blocking($pipes[1], false);
             stream_set_blocking($pipes[2], false);
 
-            
             $spinner = ['|', '/', '-', '\\']; 
             $i = 0;
 
@@ -67,10 +72,8 @@ trait Compile
             
             proc_close($process);
 
-            
             if (file_exists($fullOutputPath)) {
                 echo "\r\e[32m✔\e[0m Kompilasi Selesai! [Binary: $outputPath]          \n\n";
-                
                 
                 if (!$isWindows) {
                     chmod($fullOutputPath, 0755);
