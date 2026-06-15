@@ -35,7 +35,6 @@ class Kernel
             'make:dto'     => (new MakeDtoCommand())->handle($args),
             'make:service' => (new MakeServiceCommand())->handle($args),
             'make:module'  => (new MakeModuleCommand())->handle($args),
-            'make:goservice'  => (new MakeGoServiceCommand())->handle($args),
             'delete:module' => (new DeleteModuleCommand())->handle($args),
             'delete:action'  => (new DeleteActionCommand())->handle($args),
             'delete:dto'     => (new DeleteDtoCommand())->handle($args),

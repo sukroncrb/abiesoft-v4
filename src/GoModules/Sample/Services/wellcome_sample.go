@@ -1,13 +1,12 @@
 package services
 
 import (
-	dto "abiesoft/src/GoModules/Dto"
+	dto "abiesoft/src/GoModules/Sample/Dto"
 	shared "abiesoft/src/Shared/Helpers/Golang"
 	"database/sql"
 )
 
 func GetAllSampleService(res shared.PiGoResponse, db *sql.DB, req shared.PiGoRequest) shared.PiGoResponse {
-
 	rows, err := db.Query("SELECT id, nama, tech FROM sample ORDER BY id DESC")
 	if err != nil {
 		res.Status = "error"
@@ -20,7 +19,6 @@ func GetAllSampleService(res shared.PiGoResponse, db *sql.DB, req shared.PiGoReq
 
 	for rows.Next() {
 		var d dto.SampleDto
-
 		if err := rows.Scan(&d.ID, &d.Nama, &d.Tech); err != nil {
 			res.Status = "error"
 			res.Msg = "Scan error di tengah data: " + err.Error()
@@ -42,14 +40,8 @@ func GetAllSampleService(res shared.PiGoResponse, db *sql.DB, req shared.PiGoReq
 }
 
 func GetSampleBigDataService(res shared.PiGoResponse, db *sql.DB, req shared.PiGoRequest) shared.PiGoResponse {
-	var limitStr, offsetStr string
-
-	if val, ok := req.Params["limit"]; ok {
-		limitStr = val
-	}
-	if val, ok := req.Params["offset"]; ok {
-		offsetStr = val
-	}
+	limitStr := req.Params["limit"]
+	offsetStr := req.Params["offset"]
 
 	if limitStr == "" {
 		limitStr = "100"
@@ -79,12 +71,6 @@ func GetSampleBigDataService(res shared.PiGoResponse, db *sql.DB, req shared.PiG
 		list = append(list, m)
 	}
 
-	if err = rows.Err(); err != nil {
-		res.Status = "error"
-		res.Msg = "Stream error Big Data: " + err.Error()
-		return res
-	}
-
 	res.Status = "success"
 	res.Msg = "Big Data retrieved successfully"
 	res.Data = list
@@ -92,10 +78,7 @@ func GetSampleBigDataService(res shared.PiGoResponse, db *sql.DB, req shared.PiG
 }
 
 func GetOnlySampleService(res shared.PiGoResponse, db *sql.DB, req shared.PiGoRequest) shared.PiGoResponse {
-	var id string
-	if val, ok := req.Params["id"]; ok {
-		id = val
-	}
+	id := req.Params["id"]
 
 	rows, err := db.Query("SELECT id, nama, tech FROM sample WHERE id = ?", id)
 	if err != nil {
@@ -123,17 +106,9 @@ func GetOnlySampleService(res shared.PiGoResponse, db *sql.DB, req shared.PiGoRe
 }
 
 func CreateSampleService(res shared.PiGoResponse, db *sql.DB, req shared.PiGoRequest) shared.PiGoResponse {
-	var uuid, nama, tech string
-
-	if val, ok := req.Params["uuid"]; ok {
-		uuid = val
-	}
-	if val, ok := req.Params["nama"]; ok {
-		nama = val
-	}
-	if val, ok := req.Params["tech"]; ok {
-		tech = val
-	}
+	uuid := req.Params["uuid"]
+	nama := req.Params["nama"]
+	tech := req.Params["tech"]
 
 	if nama == "" {
 		res.Status = "error"
@@ -156,22 +131,13 @@ func CreateSampleService(res shared.PiGoResponse, db *sql.DB, req shared.PiGoReq
 		"nama": nama,
 		"tech": tech,
 	}
-
 	return res
 }
 
 func UpdateSampleService(res shared.PiGoResponse, db *sql.DB, req shared.PiGoRequest) shared.PiGoResponse {
-	var id, nama, tech string
-
-	if val, ok := req.Params["id"]; ok {
-		id = val
-	}
-	if val, ok := req.Params["nama"]; ok {
-		nama = val
-	}
-	if val, ok := req.Params["tech"]; ok {
-		tech = val
-	}
+	id := req.Params["id"]
+	nama := req.Params["nama"]
+	tech := req.Params["tech"]
 
 	query := "UPDATE sample SET nama = ?, tech = ? WHERE id = ?"
 	_, err := db.Exec(query, nama, tech, id)
@@ -187,10 +153,7 @@ func UpdateSampleService(res shared.PiGoResponse, db *sql.DB, req shared.PiGoReq
 }
 
 func DeleteSampleService(res shared.PiGoResponse, db *sql.DB, req shared.PiGoRequest) shared.PiGoResponse {
-	var id string
-	if val, ok := req.Params["id"]; ok {
-		id = val
-	}
+	id := req.Params["id"]
 
 	query := "DELETE FROM sample WHERE id = ?"
 	_, err := db.Exec(query, id)
