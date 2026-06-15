@@ -21,18 +21,30 @@ class DB
 
     public function __construct()
     {
+        
+        $host = $_ENV['DB_HOST'] ?? '127.0.0.1';
+        $dbName = $_ENV['DB_NAME'] ?? '';
+        $user = $_ENV['DB_USER'] ?? 'root';
+        $pass = $_ENV['DB_PASS'] ?? '';
+        $mode = $_ENV['MODE'] ?? 'production';
+
         try {
-            $this->_pdo = new PDO(
-                "mysql:host=" . $_ENV['DB_HOST'] . ";
-                dbname=" . $_ENV['DB_NAME'],
-                $_ENV['DB_USER'],
-                $_ENV['DB_PASS']
-            );
-        } catch (PDOException $error) {
-            if ($_ENV['MODE'] == 'develope') {
-                die($error);
+            
+            $dsn = "mysql:host=" . trim($host) . ";dbname=" . trim($dbName) . ";charset=utf8mb4";
+            
+            $this->_pdo = new PDO($dsn, trim($user), trim($pass), [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+            ]);
+
+        } catch (\PDOException $error) {
+            
+            if (trim($mode) === 'develope' || trim($mode) === 'development') {
+                die("<b>[Database Error]</b> Gagal terhubung ke database: " . $error->getMessage());
             }
-            exit();
+            
+            
+            exit("Koneksi database bermasalah.");
         }
     }
 
