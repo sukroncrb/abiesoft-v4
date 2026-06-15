@@ -11,7 +11,7 @@ import (
 )
 
 func ConnectDB() *sql.DB {
-	// Gunakan path absolut jika di Linux/Pixelbook agar lebih aman
+
 	err := godotenv.Load("./../.env")
 	if err != nil {
 		log.Println("Peringatan: File .env tidak ditemukan, menggunakan env system")
@@ -23,7 +23,6 @@ func ConnectDB() *sql.DB {
 	dbName := os.Getenv("DB_NAME")
 	dbPort := os.Getenv("DB_PORT")
 
-	// Berikan default port jika kosong
 	if dbPort == "" {
 		dbPort = "3306"
 	}
@@ -38,12 +37,9 @@ func ConnectDB() *sql.DB {
 		return nil
 	}
 
-	// Penting: Jangan biarkan Ping mematikan seluruh aplikasi
 	err = db.Ping()
 	if err != nil {
 		log.Println("Database tidak merespon (Ping Gagal):", err)
-		// Kita tetap return db agar variabel tidak nil,
-		// tapi service nanti akan menangani error saat query.
 	}
 
 	return db

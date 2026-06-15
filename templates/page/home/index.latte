@@ -415,21 +415,30 @@
 
         function renderTable() {
             tableBody.innerHTML = '';
+            
             data.forEach((item) => {
-                const isGo = item.tech === 'Golang';
+
+                const currentTech = item.tech ? item.tech : 'PHP';
+                
+
+                const isGo = currentTech.toLowerCase() === 'golang';
                 const badgeClass = isGo ? 'tech-badge-go' : 'tech-badge-php';
+                
+                const initialName = item.nama ? item.nama.charAt(0).toUpperCase() : '?';
+                const displayName = item.nama ? item.nama : 'Tanpa Nama';
+
                 const row = document.createElement('tr');
                 row.className = 'hover:bg-gray-50 transition-colors';
                 row.innerHTML = `
                     <td class="px-6 py-4">
                         <div class="flex items-center">
                             <div class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-medium text-sm mr-3 border border-gray-200">
-                                ${item.nama.charAt(0)}
+                                ${initialName}
                             </div>
                             <div>
-                                <span class="text-sm text-gray-800 font-medium block">${item.nama}</span>
+                                <span class="text-sm text-gray-800 font-medium block">${displayName}</span>
                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${badgeClass}">
-                                    ${item.tech}
+                                    ${currentTech}
                                 </span>
                             </div>
                         </div>

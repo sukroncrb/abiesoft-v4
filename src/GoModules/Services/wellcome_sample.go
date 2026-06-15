@@ -1,6 +1,7 @@
 package services
 
 import (
+	dto "abiesoft/src/GoModules/Dto"
 	shared "abiesoft/src/Shared/Helpers/Golang"
 	"database/sql"
 )
@@ -10,21 +11,15 @@ func GetAllSampleService(res shared.PiGoResponse, db *sql.DB, req shared.PiGoReq
 	rows, err := db.Query("SELECT id, nama, tech FROM sample ORDER BY id DESC")
 	if err != nil {
 		res.Status = "error"
-		res.Msg = "Gagal: " + err.Error()
+		res.Msg = "Gagal Query: " + err.Error()
 		return res
 	}
 	defer rows.Close()
 
-	type Sample struct {
-		ID   int    `json:"id"`
-		Nama string `json:"nama"`
-		Tech string `json:"tech"`
-	}
-
-	list := make([]Sample, 0)
+	list := []dto.SampleDto{}
 
 	for rows.Next() {
-		var d Sample
+		var d dto.SampleDto
 
 		if err := rows.Scan(&d.ID, &d.Nama, &d.Tech); err != nil {
 			res.Status = "error"
@@ -41,14 +36,20 @@ func GetAllSampleService(res shared.PiGoResponse, db *sql.DB, req shared.PiGoReq
 	}
 
 	res.Status = "success"
+	res.Msg = "Data retrieved successfully"
 	res.Data = list
 	return res
 }
 
 func GetSampleBigDataService(res shared.PiGoResponse, db *sql.DB, req shared.PiGoRequest) shared.PiGoResponse {
+	var limitStr, offsetStr string
 
-	limitStr := req.Params["limit"]
-	offsetStr := req.Params["offset"]
+	if val, ok := req.Params["limit"]; ok {
+		limitStr = val
+	}
+	if val, ok := req.Params["offset"]; ok {
+		offsetStr = val
+	}
 
 	if limitStr == "" {
 		limitStr = "100"
@@ -59,26 +60,20 @@ func GetSampleBigDataService(res shared.PiGoResponse, db *sql.DB, req shared.PiG
 
 	query := "SELECT id, nama FROM sample LIMIT ? OFFSET ?"
 	rows, err := db.Query(query, limitStr, offsetStr)
-
 	if err != nil {
 		res.Status = "error"
-		res.Msg = "Gagal Query: " + err.Error()
+		res.Msg = "Gagal Query Big Data: " + err.Error()
 		return res
 	}
 	defer rows.Close()
 
-	type Sample struct {
-		ID   int    `json:"id"`
-		Nama string `json:"nama"`
-	}
-
-	list := []Sample{}
+	list := make([]dto.SampleDto, 0)
 
 	for rows.Next() {
-		var m Sample
+		var m dto.SampleDto
 		if err := rows.Scan(&m.ID, &m.Nama); err != nil {
 			res.Status = "error"
-			res.Msg = "Scan error: " + err.Error()
+			res.Msg = "Scan error Big Data: " + err.Error()
 			return res
 		}
 		list = append(list, m)
@@ -86,21 +81,23 @@ func GetSampleBigDataService(res shared.PiGoResponse, db *sql.DB, req shared.PiG
 
 	if err = rows.Err(); err != nil {
 		res.Status = "error"
-		res.Msg = "Stream error: " + err.Error()
+		res.Msg = "Stream error Big Data: " + err.Error()
 		return res
 	}
 
 	res.Status = "success"
-	res.Msg = "Data retrieved"
+	res.Msg = "Big Data retrieved successfully"
 	res.Data = list
 	return res
 }
 
 func GetOnlySampleService(res shared.PiGoResponse, db *sql.DB, req shared.PiGoRequest) shared.PiGoResponse {
+	var id string
+	if val, ok := req.Params["id"]; ok {
+		id = val
+	}
 
-	id := req.Params["id"]
-	rows, err := db.Query("SELECT id, nama FROM sample WHERE id = ? ", id)
-
+	rows, err := db.Query("SELECT id, nama, tech FROM sample WHERE id = ?", id)
 	if err != nil {
 		res.Status = "error"
 		res.Msg = "Gagal mengambil data: " + err.Error()
@@ -108,15 +105,11 @@ func GetOnlySampleService(res shared.PiGoResponse, db *sql.DB, req shared.PiGoRe
 	}
 	defer rows.Close()
 
-	type Sample struct {
-		ID   int    `json:"id"`
-		Nama string `json:"nama"`
-	}
-	list := []Sample{}
+	list := make([]dto.SampleDto, 0)
 
 	for rows.Next() {
-		var m Sample
-		err := rows.Scan(&m.ID, &m.Nama)
+		var m dto.SampleDto
+		err := rows.Scan(&m.ID, &m.Nama, &m.Tech)
 		if err != nil {
 			continue
 		}
@@ -124,93 +117,90 @@ func GetOnlySampleService(res shared.PiGoResponse, db *sql.DB, req shared.PiGoRe
 	}
 
 	res.Status = "success"
+	res.Msg = "Single data retrieved successfully"
 	res.Data = list
-
 	return res
 }
 
 func CreateSampleService(res shared.PiGoResponse, db *sql.DB, req shared.PiGoRequest) shared.PiGoResponse {
-	uuid := req.Params["uuid"]
-	nama := req.Params["nama"]
-	tech := req.Params["tech"]
+	var uuid, nama, tech string
+
+	if val, ok := req.Params["uuid"]; ok {
+		uuid = val
+	}
+	if val, ok := req.Params["nama"]; ok {
+		nama = val
+	}
+	if val, ok := req.Params["tech"]; ok {
+		tech = val
+	}
 
 	if nama == "" {
 		res.Status = "error"
-		res.Msg = "Field nama tidak boleh kosong"
+		res.Msg = "Parameter 'nama' tidak boleh kosong"
 		return res
 	}
 
-	query := "INSERT INTO sample (uuid, nama, tech) VALUES (?,?,?)"
-	result, err := db.Exec(query, uuid, nama, tech)
+	query := "INSERT INTO sample (uuid, nama, tech) VALUES (?, ?, ?)"
+	_, err := db.Exec(query, uuid, nama, tech)
 	if err != nil {
 		res.Status = "error"
-		res.Msg = "Gagal simpan data: " + err.Error()
+		res.Msg = "Gagal menyimpan ke database: " + err.Error()
 		return res
 	}
 
-	lastID, _ := result.LastInsertId()
 	res.Status = "success"
-	res.Msg = "Data berhasil disimpan"
-	res.Data = map[string]interface{}{"id": lastID}
+	res.Msg = "Data berhasil disimpan oleh Go Engine"
+	res.Data = map[string]interface{}{
+		"uuid": uuid,
+		"nama": nama,
+		"tech": tech,
+	}
+
 	return res
 }
 
 func UpdateSampleService(res shared.PiGoResponse, db *sql.DB, req shared.PiGoRequest) shared.PiGoResponse {
-	id := req.Params["id"]
-	nama := req.Params["nama"]
-	tech := req.Params["tech"]
+	var id, nama, tech string
 
-	if id == "" || nama == "" {
-		res.Status = "error"
-		res.Msg = "ID dan Nama harus diisi"
-		return res
+	if val, ok := req.Params["id"]; ok {
+		id = val
+	}
+	if val, ok := req.Params["nama"]; ok {
+		nama = val
+	}
+	if val, ok := req.Params["tech"]; ok {
+		tech = val
 	}
 
 	query := "UPDATE sample SET nama = ?, tech = ? WHERE id = ?"
-	result, err := db.Exec(query, nama, tech, id)
+	_, err := db.Exec(query, nama, tech, id)
 	if err != nil {
 		res.Status = "error"
-		res.Msg = "Gagal update data: " + err.Error()
-		return res
-	}
-
-	rowsAffected, _ := result.RowsAffected()
-	if rowsAffected == 0 {
-		res.Status = "error"
-		res.Msg = "Tidak ada data yang diupdate (ID tidak ditemukan)"
+		res.Msg = "Gagal memperbarui database: " + err.Error()
 		return res
 	}
 
 	res.Status = "success"
-	res.Msg = "Data berhasil diperbarui"
+	res.Msg = "Data berhasil diperbarui oleh Go Engine"
 	return res
 }
 
 func DeleteSampleService(res shared.PiGoResponse, db *sql.DB, req shared.PiGoRequest) shared.PiGoResponse {
-	id := req.Params["id"]
-
-	if id == "" {
-		res.Status = "error"
-		res.Msg = "ID diperlukan untuk menghapus data"
-		return res
+	var id string
+	if val, ok := req.Params["id"]; ok {
+		id = val
 	}
 
 	query := "DELETE FROM sample WHERE id = ?"
-	result, err := db.Exec(query, id)
+	_, err := db.Exec(query, id)
 	if err != nil {
 		res.Status = "error"
-		res.Msg = "Gagal hapus data: " + err.Error()
-		return res
-	}
-
-	rowsAffected, _ := result.RowsAffected()
-	if rowsAffected == 0 {
-		res.Status = "error"
-		res.Msg = "Gagal hapus, ID tidak ditemukan"
+		res.Msg = "Gagal menghapus data dari database: " + err.Error()
 		return res
 	}
 
 	res.Status = "success"
-	res.Msg = "Data berhasil dihapus"
+	res.Msg = "Data berhasil dihapus oleh Go Engine"
 	return res
 }

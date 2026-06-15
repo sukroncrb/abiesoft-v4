@@ -25,12 +25,11 @@ class WellcomeRepository extends Service
             'info' => $info,
         ]);
 
-        // $this->success($result);
-
-        if($result->status == "success") {
-            $this->success($result->data);
-        }else{
-            $this->badrequest("Gagal mengambil data");
+        // Pastikan memeriksa apakah property status ada di dalam object result
+        if(isset($result->status) && $result->status == "success") {
+            $this->success($result->data ?? "Sukses");
+        } else {
+            $this->badrequest($result->message ?? "Gagal mengambil data");
         }
     }
 
@@ -41,8 +40,15 @@ class WellcomeRepository extends Service
 
     public function getAllSampleData()
     {
-        $result = (object)$this->call("sample-all-data");
-        $this->success($result->data);
+        // Berikan parameter asosiatif buatan agar dipastikan menjadi Objek {} saat di-encode
+        $result = $this->call("sample-all-data", ['init' => '1']);
+        
+        if (isset($result['status']) && $result['status'] === "error") {
+            $this->badrequest($result['msg'] ?? "Gagal memproses data");
+            return;
+        }
+
+        $this->success($result['data'] ?? []);
     }
 
     public function getOnlySampleData($id)
@@ -50,7 +56,11 @@ class WellcomeRepository extends Service
         $result = (object)$this->call("sample-only-data",[
             'id' => $id
         ]);
-        $this->success($result->data);
+        if (isset($result->data)) {
+            $this->success($result->data);
+        } else {
+            $this->success($result);
+        }
     }
 
     public function getSampleBigData($offset, $limit)
@@ -59,7 +69,11 @@ class WellcomeRepository extends Service
             'offset' => $offset,
             'limit' => $limit
         ]);
-        $this->success($result->data);
+        if (isset($result->data)) {
+            $this->success($result->data);
+        } else {
+            $this->success($result);
+        }
     }
 
     public function postSampleDataWithGolang()
@@ -70,6 +84,7 @@ class WellcomeRepository extends Service
         $id = $input->get('id');
         $method = $input->get('__method');
         $uuid = $this->uidV4();
+        
         if($id != ""){
             if($method == "DELETE"){
                 $result = (object)$this->call("delete-sample",[
@@ -89,7 +104,22 @@ class WellcomeRepository extends Service
                 'tech' => $tech,
             ]);
         }
-        $this->success($result->data);
+
+        // PERBAIKAN DI SINI:
+        if (isset($result->status) && $result->status === "error") {
+            $this->badrequest($result->message ?? "Gagal memproses data via Go");
+            return;
+        }
+
+        if (isset($result->data)) {
+            // Jika fungsi success() framework Anda hanya mendukung string, gunakan json_encode:
+            // $this->success(json_encode($result->data));
+            
+            // Jika fungsi success() mendukung array/object, kirim langsung secara aman:
+            $this->success($result->data);
+        } else {
+            $this->success("Proses Go Engine Berhasil");
+        }
     }
 
     public function postSampleDataWithPhp()
