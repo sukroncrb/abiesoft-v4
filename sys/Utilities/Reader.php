@@ -28,35 +28,37 @@ class Reader
     }
     
     public function secretCode($secretcode, $secretkey) {
-
         if (empty($secretcode)) {
             return null;
         }
-        $cipher = "aes-128-cbc";
-        $ciphertext_dec = base64_decode($secretcode, true);
         
-        if ($ciphertext_dec === false) {
+        $cipher = "aes-256-gcm";
+        $decoded = base64_decode($secretcode, true);
+        
+        if ($decoded === false) {
             return null;
         }
 
         $ivlen = openssl_cipher_iv_length($cipher);
-    
-        if (strlen($ciphertext_dec) <= $ivlen) {
+        $taglen = 16;
+        
+        if (strlen($decoded) <= ($ivlen + $taglen)) {
             return null;
         }
 
-        $iv = substr($ciphertext_dec, 0, $ivlen);
-        $ciphertext = substr($ciphertext_dec, $ivlen);
+        $iv = substr($decoded, 0, $ivlen);
+        $tag = substr($decoded, $ivlen, $taglen);
+        $ciphertext = substr($decoded, $ivlen + $taglen);
         
-        $original_plaintext = openssl_decrypt($ciphertext, $cipher, $secretkey, 0, $iv);
+        $original_plaintext = openssl_decrypt($ciphertext, $cipher, $secretkey, OPENSSL_RAW_DATA, $iv, $tag);
         
         if ($original_plaintext === false) {
-            return null; 
+            return null;
         }
 
         $data = json_decode($original_plaintext, true);
-    
-        return (json_last_error() === JSON_ERROR_NONE) ? $data : null;
+        
+        return (json_last_error() === JSON_ERROR_NONE) ? $data : $original_plaintext;
     }
     
 }

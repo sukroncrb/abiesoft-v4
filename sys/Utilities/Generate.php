@@ -33,16 +33,15 @@ class Generate
     }
 
     public function secretCode($data, $secretkey) {
-        $cipher = "aes-128-cbc";
+        $cipher = "aes-256-gcm";
         $ivlen = openssl_cipher_iv_length($cipher);
         $iv = openssl_random_pseudo_bytes($ivlen);
-
         if (is_array($data)) {
             $data = json_encode($data);
         }
-
-        $ciphertext = openssl_encrypt($data, $cipher, $secretkey, $options=0, $iv);
-        return base64_encode($iv . $ciphertext);
+        $tag = "";
+        $ciphertext = openssl_encrypt($data, $cipher, $secretkey, OPENSSL_RAW_DATA, $iv, $tag);
+        return base64_encode($iv . $tag . $ciphertext);
     }
 
     public function csrf($formid): string
