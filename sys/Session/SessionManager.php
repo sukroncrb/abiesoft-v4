@@ -199,14 +199,13 @@ class SessionManager
         if (!$user) return "";
 
         $publicfolder = $_ENV['PUBLIC_FOLDER'];
-        $baseurl = $_ENV['BASEURL']; // Ambil langsung dari ENV, jangan lewat defineOpsi
+        $baseurl = $_ENV['BASEURL'];
 
         $photo = "https://placehold.co/40x40/F0ECE5/161A30?text=".(new Generate)->namaInisial($user->nama);
 
         if($user->photo != ""){
             $file = __DIR__."/../../".$publicfolder."/".$user->photo;
             if(file_exists($file)){
-                // Gunakan $baseurl langsung
                 $photo = $baseurl . $user->photo;
             }
         }
@@ -223,18 +222,6 @@ class SessionManager
 
     public function getRole() {
         return $this->userData()->role;
-    }
-
-    public function getHp() {
-        return $this->userData()->hp;
-    }
-
-    public function getAlamat() {
-        return $this->userData()->alamat;
-    }
-
-    public function getUnit() {
-        return $this->userData()->unit;
     }
     
 }

@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Abiesoft\System\Database;
 
+use Abiesoft\App\Shared\Helpers\Uuid;
 use PDO;
 use PDOException;
 
 class DB
 {
-    use Query;
+    use Uuid;
     private static $terhubung = null;
 
     private
@@ -19,32 +20,29 @@ class DB
         $_hasil = [],
         $_hitung = 0;
 
+    private string $_qb_tabel = "";
+    private string $_qb_select = "*";
+    private array $_qb_where = [];
+    private array $_qb_join = [];
+    private array $_qb_order = [];
+    private ?int $_qb_limit = null;
+    private int $_qb_offset = 0;
+    private array $_qb_params = [];
+
     public function __construct()
     {
-        
-        $host = $_ENV['DB_HOST'] ?? '127.0.0.1';
-        $dbName = $_ENV['DB_NAME'] ?? '';
-        $user = $_ENV['DB_USER'] ?? 'root';
-        $pass = $_ENV['DB_PASS'] ?? '';
-        $mode = $_ENV['MODE'] ?? 'production';
-
         try {
-            
-            $dsn = "mysql:host=" . trim($host) . ";dbname=" . trim($dbName) . ";charset=utf8mb4";
-            
-            $this->_pdo = new PDO($dsn, trim($user), trim($pass), [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-            ]);
-
-        } catch (\PDOException $error) {
-            
-            if (trim($mode) === 'develope' || trim($mode) === 'development') {
-                die("<b>[Database Error]</b> Gagal terhubung ke database: " . $error->getMessage());
+            $this->_pdo = new PDO(
+                "mysql:host=" . $_ENV['DB_HOST'] . ";
+                dbname=" . $_ENV['DB_NAME'],
+                $_ENV['DB_USER'],
+                $_ENV['DB_PASS']
+            );
+        } catch (PDOException $error) {
+            if ($_ENV['MODE'] == 'develope') {
+                die($error);
             }
-            
-            
-            exit("Koneksi database bermasalah.");
+            exit();
         }
     }
 
@@ -55,41 +53,185 @@ class DB
         }
         return self::$terhubung;
     }
+    private function eksekusiQueryBuilder(): void
+    {
+        if ($this->_qb_tabel !== "") {
+            $sql = "SELECT {$this->_qb_select} FROM {$this->_qb_tabel}";
+
+            if (!empty($this->_qb_join)) {
+                $sql .= " " . implode(" ", $this->_qb_join);
+            }
+
+            if (!empty($this->_qb_where)) {
+                $sql .= " WHERE " . implode(" AND ", $this->_qb_where);
+            }
+
+            if (!empty($this->_qb_order)) {
+                $sql .= " ORDER BY " . implode(", ", $this->_qb_order);
+            }
+
+            if ($this->_qb_limit !== null) {
+                $sql .= " LIMIT ? OFFSET ?";
+                $this->_qb_params[] = $this->_qb_limit;
+                $this->_qb_params[] = $this->_qb_offset;
+            }
+
+            $this->query($sql, $this->_qb_params);
+
+            $this->resetQueryBuilder();
+        }
+    }
+
+    private function resetQueryBuilder(): void
+    {
+        $this->_qb_tabel = "";
+        $this->_qb_select = "*";
+        $this->_qb_where = [];
+        $this->_qb_join = [];
+        $this->_qb_order = [];
+        $this->_qb_limit = null;
+        $this->_qb_offset = 0;
+        $this->_qb_params = [];
+    }
+
+    /*
+
+
+        ---------------------------------------------------------------
+        contoh penggunaan :
+        $this->tabel('users')
+        ---------------------------------------------------------------
+    */
+    public function tabel(string $tabel): self
+    {
+        $this->resetQueryBuilder();
+        $this->_qb_tabel = $tabel;
+        return $this;
+    }
+
+    /*
+
+
+        ---------------------------------------------------------------
+        contoh penggunaan :
+        $this->tabel('users')
+        ->select('users.nama, users.photo, users.email');
+        ---------------------------------------------------------------
+    */
+    public function select(string $select = "*"): self
+    {
+        $this->_qb_select = $select;
+        return $this;
+    }
+
+    /*
+
+
+        ---------------------------------------------------------------
+        contoh penggunaan :
+        $this->tabel('users')
+        ->where('users.status', '=', 'aktif');
+        ---------------------------------------------------------------
+    */
+    public function where(string $kolom, string $simbol, $nilai): self
+    {
+        $this->_qb_where[] = "{$kolom} {$simbol} ?";
+        $this->_qb_params[] = $nilai;
+        return $this;
+    }
+
+    /*
+
+
+        ---------------------------------------------------------------
+        contoh penggunaan :
+        $this->tabel('users')
+        ->join('alamat', 'users.id', '=', 'alamat.usersid');
+        ---------------------------------------------------------------
+    */
+    public function join(string $tabelTarget, string $onKolom1, string $simbol, string $onKolom2): self
+    {
+        $this->_qb_join[] = "JOIN {$tabelTarget} ON {$onKolom1} {$simbol} {$onKolom2}";
+        return $this;
+    }
+
+    /*
+
+
+        ---------------------------------------------------------------
+        contoh penggunaan :
+        ->order('created_at', 'DESC')
+        ---------------------------------------------------------------
+    */
+    public function order(string $kolom, string $arah = 'ASC'): self
+    {
+        $arahAman = strtoupper($arah) === 'DESC' ? 'DESC' : 'ASC';
+        $this->_qb_order[] = "{$kolom} {$arahAman}";
+        return $this;
+    }
+
+    /*
+
+
+        ---------------------------------------------------------------
+        contoh penggunaan :
+        ->limit(5);
+        ->limit(5, 100);
+        ---------------------------------------------------------------
+    */
+    public function limit(int $limit, int $offset = 0): self
+    {
+        $this->_qb_limit = $limit;
+        $this->_qb_offset = $offset;
+        return $this;
+    }
 
     public function hasil(): array
     {
-        return $this->_hasil ?? [];
+        $this->eksekusiQueryBuilder();
+        return $this->_hasil;
     }
 
     public function json()
     {
-        return json_encode($this->hasil());
+        $this->eksekusiQueryBuilder();
+        return json_encode($this->_hasil);
     }
 
     public function teks()
     {
-        if ($this->_hitung === 0 || empty($this->_hasil)) {
-            return '';
-        }
-
+        $this->eksekusiQueryBuilder();
         $result = '';
-        foreach($this->_hasil[0] as $k => $v){
-            $result = $this->_hasil[0]->$k;
+        if(isset($this->_hasil[0])){
+            foreach($this->_hasil[0] as $k => $v){
+                $result = $this->_hasil[0]->$k;
+            }
         }
         return $result;
     }
 
     public function angka()
     {
-        if ($this->_hitung === 0 || empty($this->_hasil)) {
-            return 0;
-        }
-
+        $this->eksekusiQueryBuilder();
         $result = '';
-        foreach($this->_hasil[0] as $k => $v){
-            $result = $this->_hasil[0]->$k;
+        if(isset($this->_hasil[0])){
+            foreach($this->_hasil[0] as $k => $v){
+                $result = $this->_hasil[0]->$k;
+            }
         }
         return intval($result);
+    }
+
+    public function awal(): object
+    {
+        $this->eksekusiQueryBuilder();
+        return $this->_hasil[0];
+    }
+
+    public function hitung(): int
+    {
+        $this->eksekusiQueryBuilder();
+        return $this->_hitung;
     }
 
     public function error(): bool
@@ -97,17 +239,228 @@ class DB
         return $this->_error;
     }
 
-    public function awal(): ?object
+    public function query(string $sql, array $params = [])
     {
-        if ($this->_hitung === 0 || empty($this->hasil())) {
-            return null; 
+        try {
+            $this->_error = false;
+            if ($this->_query = $this->_pdo->prepare($sql)) {
+                $x = 1;
+                if (count($params)) {
+                    foreach ($params as $p) {
+                        if (is_int($p)) {
+                            $this->_query->bindValue($x, $p, PDO::PARAM_INT);
+                        } else {
+                            $this->_query->bindValue($x, $p, PDO::PARAM_STR);
+                        }
+                        $x++;
+                    }
+                }
+                if ($this->_query->execute()) {
+                    $this->_hasil        = $this->_query->fetchAll(PDO::FETCH_OBJ);
+                    $this->_hitung       = $this->_query->rowCount();
+                } else {
+                    $this->_error = true;
+                }
+            }
+            return $this;
+        } catch (PDOException $error) {
+            if ($_ENV['MODE'] == 'develope') {
+                die($error);
+            }
+            exit();
         }
-
-        return $this->hasil()[0];
     }
 
-    public function hitung(): int
+    public function action(string $action, string $tabel, array $where = [])
     {
-        return $this->_hitung;
+        if (count($where) === 3) {
+            $daftarsimbol = array('=', '>', '<', '<=', '>=');
+            $kolom  = $where[0];
+            $simbol = $where[1];
+            $nilai  = $where[2];
+            if (in_array($simbol, $daftarsimbol)) {
+                $sql = "{$action} FROM {$tabel} WHERE {$kolom} {$simbol} ?";
+                if (!$this->query($sql, array($nilai))->error()) {
+                    return $this;
+                }
+            }
+        }
+        return false;
+    }
+
+    /*
+
+
+        ---------------------------------------------------------------
+        contoh penggunaan :
+        ->input('users', [
+            'nama' => 'User',
+            'email' => 'user@email.com'
+        ])
+        ---------------------------------------------------------------
+    */
+    public function input(string $tabel, array $kolom, string|array $exist = "")
+    {
+        if ($exist !== "") {
+            $checkSql = "SELECT id FROM {$tabel} WHERE ";
+            $checkParams = [];
+
+            if (is_array($exist)) {
+                $conditions = [];
+                foreach ($exist as $field) {
+                    if (array_key_exists($field, $kolom)) {
+                        $conditions[] = "`{$field}` = ?";
+                        $checkParams[] = $kolom[$field];
+                    }
+                }
+                $checkSql .= implode(' AND ', $conditions);
+            } else {
+                if (array_key_exists($exist, $kolom)) {
+                    $checkSql .= "`{$exist}` = ?";
+                    $checkParams[] = $kolom[$exist];
+                }
+            }
+
+            if (!empty($checkParams)) {
+                $jumlahData = $this->query($checkSql, $checkParams)->hitung();
+                if ($jumlahData > 0) {
+                    return false; 
+                }
+            }
+        }
+
+        if (!isset($kolom['uuid'])) {
+            $kolom['uuid'] = $this->uidV4();
+        }
+
+        if (count($kolom)) {
+            $keys = array_keys($kolom);
+            $value = null;
+            $x = 1;
+
+            foreach ($kolom as $k) {
+                $value .= '?';
+                if ($x < count($kolom)) {
+                    $value .= ', ';
+                }
+                $x++;
+            }
+
+            $sql = "INSERT INTO {$tabel} (`" . implode('`, `', $keys) . "`) VALUES ({$value})";
+
+            if (!$this->query($sql, array_values($kolom))->error()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public function all($tabel, $select = "*", $query = "", $opsi = [], $output = "array"){
+        if(count($opsi) == 0){
+            $opsi = "";
+        }else{
+            $opsi = ", ".$opsi;
+        }
+
+        $data = $this->query("SELECT $select FROM $tabel $query ". $opsi);
+
+        return match($output){
+            'json' => $data->json(),
+            'hitung' => $data->hitung(),
+            default => $data->hasil()
+        };
+    }
+
+    public function only($tabel, $select = "*", $output = "array", $id = ""){
+        $kolomKunci = is_numeric($id) ? 'id' : 'uuid';
+        $where = " $kolomKunci = ? ";
+        $data = $this->query("SELECT $select FROM $tabel WHERE $where ", [$id]);
+
+        return match($output){
+            'json' => $data->json(),
+            'hitung' => $data->hitung(),
+            'string' => $data->teks(),
+            'angka' => $data->angka(),
+            default => $data->hasil()
+        };
+    }
+
+    public function legacy_join(array $tabel, array $on, string $select = "*")
+    {
+        if (count($tabel) === 2 && count($on) === 2) {
+            $tabel1 = $tabel[0];
+            $tabel2 = $tabel[1];
+            $kolom1 = $on[0];
+            $kolom2 = $on[1];
+
+            $sql = "SELECT {$select} FROM {$tabel1} JOIN {$tabel2} ON {$tabel1}.{$kolom1} = {$tabel2}.{$kolom2}";
+            
+            if (!$this->query($sql)->error()) {
+                return $this;
+            }
+        }
+        return false;
+    }
+
+    /*
+
+
+        ---------------------------------------------------------------
+        contoh penggunaan :
+        ->perbarui('users', '1', [
+            'nama' => 'User',
+            'email' => 'user@email.com'
+        ])
+        ---------------------------------------------------------------
+    */
+    public function perbarui(string $tabel, int|string $id, array $kolom)
+    {
+        $set = '';
+        $x = 1;
+        $params = []; 
+
+        foreach ($kolom as $nama => $value) {
+            $set .= "{$nama} = ?";
+            $params[] = $value;
+            
+            if ($x < count($kolom)) {
+                $set .= ', ';
+            }
+            $x++;
+        }
+        
+        $kolomKunci = is_numeric($id) ? 'id' : 'uuid';
+        $sql = "UPDATE {$tabel} SET {$set} WHERE {$kolomKunci} = ?";
+        $params[] = $id;
+        if (!$this->query($sql, $params)->error()) {
+            return true;
+        }
+        return false;
+    }
+
+    /*
+
+
+        ---------------------------------------------------------------
+        contoh penggunaan :
+        ->hapus('users', ['id', '=', '1'])
+        ---------------------------------------------------------------
+    */
+    public function hapus(string $tabel, array $where)
+    {
+        return  $this->action('DELETE ', $tabel, $where);
+    }
+
+    /*
+
+
+        ---------------------------------------------------------------
+        contoh penggunaan :
+        ->tampilkan('users', ['id', '=', '1'])
+        ---------------------------------------------------------------
+    */
+    public function tampilkan(string $tabel, array $where)
+    {
+        return $this->action('SELECT *', $tabel, $where);
     }
 }
