@@ -8,6 +8,7 @@ use Abiesoft\System\Console\Commands\DeleteDtoCommand;
 use Abiesoft\System\Console\Commands\DeleteModuleCommand;
 use Abiesoft\System\Console\Commands\DeleteServiceCommand;
 use Abiesoft\System\Console\Commands\MakeActionCommand;
+use Abiesoft\System\Console\Commands\MakeAuthSystem;
 use Abiesoft\System\Console\Commands\MakeDtoCommand;
 use Abiesoft\System\Console\Commands\MakeGoServiceCommand;
 use Abiesoft\System\Console\Commands\MakeModuleCommand;
@@ -35,12 +36,14 @@ class Kernel
             'make:dto'     => (new MakeDtoCommand())->handle($args),
             'make:service' => (new MakeServiceCommand())->handle($args),
             'make:module'  => (new MakeModuleCommand())->handle($args),
+            'make:goservice'  => (new MakeGoServiceCommand())->handle($args),
             'delete:module' => (new DeleteModuleCommand())->handle($args),
             'delete:action'  => (new DeleteActionCommand())->handle($args),
             'delete:dto'     => (new DeleteDtoCommand())->handle($args),
             'delete:service' => (new DeleteServiceCommand())->handle($args),
 
             'database:import' => (new DatabaseImportCommand())->handle($args),
+            'make:authsystem' => (new MakeAuthSystem())->handle($args),
             
             'help'         => $this->showHelp(),
             default        => $this->tampilkanError("Perintah '$command' tidak dikenali."),

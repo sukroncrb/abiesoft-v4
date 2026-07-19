@@ -2,10 +2,30 @@
 
 declare(strict_types=1);
 
-namespace Abiesoft\App\Shared\Helpers;
+namespace Abiesoft\App\Shared\Helpers\Konten;
 
 trait Info
 {
+
+    public function getIp() {
+        $ip = '';
+        if (isset($_SERVER['HTTP_CLIENT_IP'])) {
+            $ip = $_SERVER['HTTP_CLIENT_IP'];
+        } else if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+        } else if (isset($_SERVER['HTTP_X_FORWARDED'])) {
+            $ip = $_SERVER['HTTP_X_FORWARDED'];
+        } else if (isset($_SERVER['HTTP_FORWARDED_FOR'])) {
+            $ip = $_SERVER['HTTP_FORWARDED_FOR'];
+        } else if (isset($_SERVER['HTTP_FORWARDED'])) {
+            $ip = $_SERVER['HTTP_FORWARDED'];
+        } else if (isset($_SERVER['REMOTE_ADDR'])) {
+            $ip = $_SERVER['REMOTE_ADDR'];
+        } else {
+            $ip = 'Ip Tidak Dikenali';
+        }
+        return $ip;
+    }
 
     public function deviceModel($ua)
     {
@@ -104,5 +124,14 @@ trait Info
             'ip' => $ip,
             'full' => "Lokasi tidak diketahui • {$ip}"
         ];
+    }
+
+    protected function redirectToBaseUrl() {
+        header('Location: /');
+        exit; 
+    }
+
+    protected function currentPage(){
+        return $_SERVER['PATH_INFO'];
     }
 }

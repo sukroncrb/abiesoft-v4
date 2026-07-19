@@ -2,7 +2,7 @@
 
 namespace Abiesoft\System\View;
 
-use Abiesoft\App\Shared\Helpers\Define;
+use Abiesoft\App\Shared\Helpers\Konten\Define;
 use Latte\Engine;
 
 class ViewRenderer

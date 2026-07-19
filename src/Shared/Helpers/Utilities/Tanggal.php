@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Abiesoft\App\Shared\Helpers;
+namespace Abiesoft\App\Shared\Helpers\Utilities;
 
 use DateTime;
 use DateTimeZone;
@@ -11,6 +11,14 @@ use IntlDateFormatter;
 trait Tanggal
 {
 
+    /*
+
+
+        ---------------------------------------------------------------
+        Outputnya :
+        Sabtu, 20 September 2025
+        ---------------------------------------------------------------
+    */
     public function hariDanTanggal($datetime) {
         $locale = 'id_ID';
         $dateFormatter = new IntlDateFormatter(
@@ -20,9 +28,17 @@ trait Tanggal
             'Asia/Jakarta'
         );
         $tanggal = new DateTime($datetime);
-        return $dateFormatter->format($tanggal);  // Contoh Outputnya : Sabtu, 20 September 2025
+        return $dateFormatter->format($tanggal);
     }
 
+    /*
+
+
+        ---------------------------------------------------------------
+        Outputnya :
+        20 September 2025
+        ---------------------------------------------------------------
+    */
     public function tanggalFull($datetime) {
         $locale = 'id_ID';
         $dateFormatter = new IntlDateFormatter(
@@ -32,9 +48,17 @@ trait Tanggal
             'Asia/Jakarta'
         );
         $tanggal = new DateTime($datetime);
-        return $dateFormatter->format($tanggal); // Contoh Outputnya : 20 September 2025
+        return $dateFormatter->format($tanggal);
     }
 
+    /*
+
+
+        ---------------------------------------------------------------
+        Outputnya :
+        20 Sep 2025
+        ---------------------------------------------------------------
+    */
     public function tanggalSimpel($datetime) {
         $locale = 'id_ID';
         $dateFormatter = new IntlDateFormatter(
@@ -44,9 +68,17 @@ trait Tanggal
             'Asia/Jakarta'
         );
         $tanggal = new DateTime($datetime);
-        return $dateFormatter->format($tanggal); // Contoh Outputnya : 20 Sep 2025
+        return $dateFormatter->format($tanggal);
     }
 
+    /*
+
+
+        ---------------------------------------------------------------
+        Outputnya :
+        20/09/25
+        ---------------------------------------------------------------
+    */
     public function tanggalSlash($datetime) {
         $locale = 'id_ID';
         $dateFormatter = new IntlDateFormatter(
@@ -56,9 +88,17 @@ trait Tanggal
             'Asia/Jakarta'
         );
         $tanggal = new DateTime($datetime);
-        return $dateFormatter->format($tanggal); // Contoh Outputnya : 20/09/25
+        return $dateFormatter->format($tanggal);
     }
 
+    /*
+
+
+        ---------------------------------------------------------------
+        Outputnya :
+        Barusaja, 1 jam yang lalu dan lain-lain
+        ---------------------------------------------------------------
+    */
     public function facebook($datetime) {
         $tz = new DateTimeZone('Asia/Jakarta');
         $waktu_sekarang = new DateTime('now', $tz);

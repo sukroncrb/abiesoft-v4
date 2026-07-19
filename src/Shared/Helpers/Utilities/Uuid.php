@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Abiesoft\App\Shared\Helpers;
+namespace Abiesoft\App\Shared\Helpers\Utilities;
 
 trait Uuid
 {

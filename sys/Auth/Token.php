@@ -2,12 +2,11 @@
 
 namespace Abiesoft\System\Auth;
 
-use Abiesoft\App\Shared\Helpers\Define;
+use Abiesoft\App\Shared\Helpers\Konten\Define;
 use Abiesoft\App\Shared\Helpers\Service;
 use Abiesoft\System\Database\DB;
 use Abiesoft\System\Http\Cookie;
 use Abiesoft\System\Utilities\Generate;
-use Abiesoft\System\Utilities\Reader;
 
 class Token extends Service
 { 
@@ -30,10 +29,9 @@ class Token extends Service
     public function getBearer()
     {
         $cookie = new Cookie;
-        $reader = new Reader;
         $secretkey = $_ENV['SECRET_KEY'];
         $generate = new Generate;
-        $dataReader = $reader->secretCode($cookie->get('_cf_v3'),$secretkey);
+        $dataReader = $this->readSecretCode($cookie->get('_cf_v3'),$secretkey);
         $datacf = [
             'apikey' => $dataReader->apikey,
             'inisial' => $dataReader->inisial,
@@ -44,7 +42,7 @@ class Token extends Service
                 'suara' => $dataReader->suara
             ]
         ];
-        $newcf = $generate->secretCode($datacf, $secretkey);
+        $newcf = $this->readSecretCode($datacf, $secretkey);
         $cookie->set("_cf_v3", $newcf);
         $this->success($newcf);
     }

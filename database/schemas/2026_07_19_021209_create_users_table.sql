@@ -3,14 +3,12 @@ CREATE TABLE IF NOT EXISTS users (
     uuid VARCHAR(36) NOT NULL,
     nama VARCHAR(255),
     email VARCHAR(255),
-    hp VARCHAR(255),
-    alamat TEXT,
-    unit VARCHAR(255),
     password_hash VARCHAR(255),
     photo VARCHAR(255),
     kode INT(4),
     role VARCHAR(255) DEFAULT 'staf',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    dibuat TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    diedit TIMESTAMP,
+    dihapus TIMESTAMP,
     INDEX (uuid)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

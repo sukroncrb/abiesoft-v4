@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Abiesoft\App\Shared\Middleware;
 
-use Abiesoft\App\Shared\Helpers\ApiResult;
-use Abiesoft\App\Shared\Helpers\Define;
+use Abiesoft\App\Shared\Helpers\Keamanan\SecretCode;
+use Abiesoft\App\Shared\Helpers\Konten\Define;
+use Abiesoft\App\Shared\Helpers\Utilities\ApiResult;
 use Abiesoft\System\Database\DB;
 use Abiesoft\System\Http\Cookie;
 use Abiesoft\System\Http\MiddlewareInterface;
@@ -15,13 +16,12 @@ use Abiesoft\System\Utilities\Reader;
 class ApiMiddleware implements MiddlewareInterface
 {
     
-    use ApiResult, Define;
+    use ApiResult, Define, SecretCode;
     public function handle(): bool
     {
         if($this->defineOpsi("mode") != "develope"){
 
             $cookie = new Cookie();
-            $reader = new Reader();
             $input = new Input();
             $database = (new DB)->terhubung();
             $secretkey = $_ENV['SECRET_KEY'];
@@ -35,7 +35,7 @@ class ApiMiddleware implements MiddlewareInterface
 
             $secretcode = str_replace("Bearer ", "", $authHeader);
 
-            $decodedData = $reader->secretCode($secretcode, $secretkey);
+            $decodedData = $this->readSecretCode($secretcode, $secretkey);
 
             if (isset($decodedData['timestamp']) && (time() - $decodedData['timestamp'] > 600000)) {
                 $this->unauthorized("Sesi enkripsi berakhir");
@@ -50,7 +50,7 @@ class ApiMiddleware implements MiddlewareInterface
 
             $inisialCookie = "";
             if ($cookie->has("_cf_v3")) {
-                $cookieData = $reader->secretCode($cookie->get("_cf_v3"), $secretkey);
+                $cookieData = $this->readSecretCode($cookie->get("_cf_v3"), $secretkey);
                 if (is_array($cookieData)) {
                     $inisialCookie = $cookieData['inisial'] ?? '';
                 }

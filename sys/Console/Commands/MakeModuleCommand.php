@@ -83,8 +83,9 @@ class MakeModuleCommand extends BaseCommand
             $sql .= "    {$kolom['nama']} {$kolom['tipedata']},\n";
         }
 
-        $sql .= "    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n";
-        $sql .= "    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n";
+        $sql .= "    dibuat TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n";
+        $sql .= "    diedit TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n";
+        $sql .= "    dihapus TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n";
         $sql .= "    INDEX (uuid)\n";
         $sql .= ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;\n";
 
@@ -222,14 +223,12 @@ namespace Abiesoft\App\Modules\\{$namaModule}\Services;
 
 use Abiesoft\App\Modules\\{$namaModule}\Dto\\{$dtoClass};
 use Abiesoft\App\Shared\Helpers\Service;
-use Abiesoft\App\Shared\Helpers\Uuid;
 use Abiesoft\System\Database\DB;
 use Abiesoft\System\Utilities\Input;
 
 class {$className} extends Service
 {
     private \$db;
-    use Uuid;
 
     public function __construct()
     {
@@ -253,7 +252,6 @@ class {$className} extends Service
         \$input = new Input();
         \$id = \$input->get('id');
         \$method = \$input->get('__method');
-        \$uuid = \$this->uidV4();
 
         // Tangkap variabel dinamis dari objek Dto input
 PHP;

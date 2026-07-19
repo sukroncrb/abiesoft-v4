@@ -5,14 +5,12 @@ declare(strict_types=1);
 namespace Abiesoft\App\Modules\Home\Services;
 
 use Abiesoft\App\Shared\Helpers\Service;
-use Abiesoft\App\Shared\Helpers\Uuid;
 use Abiesoft\System\Database\DB;
 use Abiesoft\System\Utilities\Input;
 
 class WellcomeRepository extends Service
 {
     private $db;
-    use Uuid;
 
     public function __construct()
     {
@@ -25,7 +23,6 @@ class WellcomeRepository extends Service
             'info' => $info,
         ]);
 
-        // Pastikan memeriksa apakah property status ada di dalam object result
         if(isset($result->status) && $result->status == "success") {
             $this->success($result->data ?? "Sukses");
         } else {
@@ -40,7 +37,6 @@ class WellcomeRepository extends Service
 
     public function getAllSampleData()
     {
-        // Berikan parameter asosiatif buatan agar dipastikan menjadi Objek {} saat di-encode
         $result = $this->call("sample-all-data", ['init' => '1']);
         
         if (isset($result['status']) && $result['status'] === "error") {
@@ -105,17 +101,12 @@ class WellcomeRepository extends Service
             ]);
         }
 
-        // PERBAIKAN DI SINI:
         if (isset($result->status) && $result->status === "error") {
             $this->badrequest($result->message ?? "Gagal memproses data via Go");
             return;
         }
 
         if (isset($result->data)) {
-            // Jika fungsi success() framework Anda hanya mendukung string, gunakan json_encode:
-            // $this->success(json_encode($result->data));
-            
-            // Jika fungsi success() mendukung array/object, kirim langsung secara aman:
             $this->success($result->data);
         } else {
             $this->success("Proses Go Engine Berhasil");

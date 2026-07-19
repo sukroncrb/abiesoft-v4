@@ -2,8 +2,6 @@
 
 namespace Abiesoft\System\Exception;
 
-use Abiesoft\App\Shared\Helpers\ApiResult;
-use Abiesoft\App\Shared\Helpers\Define;
 use Throwable;
 
 class ErrorHandler

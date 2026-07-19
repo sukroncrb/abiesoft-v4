@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace Abiesoft\App\Modules\Home\Actions;
 
 use Abiesoft\App\Modules\Home\Services\WellcomeRepository;
-use Abiesoft\App\Shared\Helpers\ApiResult;
+use Abiesoft\App\Shared\Helpers\Utilities\ApiResult;
 use Abiesoft\System\Utilities\Input;
-use Abiesoft\System\View\ViewRenderer;
 
 readonly class PostSampleHomeAction
 {

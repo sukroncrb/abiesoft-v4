@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Abiesoft\System\Utilities;
 
-use Abiesoft\App\Shared\Helpers\ApiResult;
+use Abiesoft\App\Shared\Helpers\Keamanan\SecretCode;
 use Abiesoft\System\Database\DB;
 use Abiesoft\System\Http\Cookie;
 
 class Generate
 {
+
+    use SecretCode;
     protected function acak()
     {
         $karakter = 'AaBbCcDdEeFfGgHhIiJjKkLMmNnOoPpQqRrSsTtUuVvWwXxYyZz0123456789';
@@ -32,25 +34,13 @@ class Generate
         return (int)$result;
     }
 
-    public function secretCode($data, $secretkey) {
-        $cipher = "aes-256-gcm";
-        $ivlen = openssl_cipher_iv_length($cipher);
-        $iv = openssl_random_pseudo_bytes($ivlen);
-        if (is_array($data)) {
-            $data = json_encode($data);
-        }
-        $tag = "";
-        $ciphertext = openssl_encrypt($data, $cipher, $secretkey, OPENSSL_RAW_DATA, $iv, $tag);
-        return base64_encode($iv . $tag . $ciphertext);
-    }
-
     public function csrf($formid): string
     {
         $db = (new DB)->terhubung();
         $cookie = new Cookie();
         $secretkey = $_ENV['SECRET_KEY'];
         $result = "";
-        $inisial = (new Reader)->secretCode($cookie->get("_cf_v3"), $secretkey)['inisial'];
+        $inisial = $this->readSecretCode($cookie->get("_cf_v3"), $secretkey)['inisial'];
         
         if($inisial){
             $token = $this->acak();
@@ -78,10 +68,9 @@ class Generate
     public function formID($method): string
     {
         $cookie = new Cookie();
-        $reader = new Reader();
         $secretkey = $_ENV['SECRET_KEY'];
         $cf = $cookie->get("_cf_v3");
-        $kode = $reader->secretCode($cf, $secretkey)['inisial'];
+        $kode = $this->readSecretCode($cf, $secretkey)['inisial'];
         $result = "form-".sha1($method.$kode);
         return $result;
     }

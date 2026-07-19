@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace Abiesoft\System\Session;
 
-use Abiesoft\App\Shared\Helpers\ApiResult;
-use Abiesoft\App\Shared\Helpers\Define;
-use Abiesoft\App\Shared\Helpers\Info;
+use Abiesoft\App\Shared\Helpers\Keamanan\SecretCode;
+use Abiesoft\App\Shared\Helpers\Konten\Define;
+use Abiesoft\App\Shared\Helpers\Konten\Info;
+use Abiesoft\App\Shared\Helpers\Utilities\ApiResult;
 use Abiesoft\System\Database\DB;
 use Abiesoft\System\Http\Cookie;
 use Abiesoft\System\Utilities\Generate;
 use Abiesoft\System\Utilities\Input;
-use Abiesoft\System\Utilities\Reader;
 
 class SessionManager
 {
     
-    use ApiResult, Define, Info;
+    use ApiResult, Define, Info, SecretCode;
     protected function cariuser(string $email)
     {
         $database = (new DB)->terhubung();
@@ -33,7 +33,6 @@ class SessionManager
 
     public function setLogin(){
         $input = new Input();
-        $reader = new Reader();
         $generate = new Generate();
         $cookie = new Cookie();
         $database = (new DB)->terhubung();
@@ -60,7 +59,7 @@ class SessionManager
                     $this->badrequest("Aplikasi dalam pemeliharaan, silahkan coba lagi nanti.");
                 }
 
-                $decodedData = $reader->secretCode($cookie->get("_cf_v3"),$secretkey);
+                $decodedData = $this->readSecretCode($cookie->get("_cf_v3"),$secretkey);
                 $apikey = $decodedData['apikey'];
                 $inisial = $decodedData['inisial'];
                 $notifikasi = $decodedData['seting']['notifikasi'];
@@ -80,7 +79,7 @@ class SessionManager
                         'suara' => $suara
                     ]
                 ];
-                $newcf = $generate->secretCode($datacf, $secretkey);
+                $newcf = $this->makeSecretCode($datacf, $secretkey);
                 $cookie->set("_cf_v3", $newcf);
 
                 $logID = $database->query("SELECT id FROM log WHERE inisial = ? AND email = ? ",[$inisial, $email])->teks();
@@ -110,7 +109,7 @@ class SessionManager
                         'email' => $email,
                         'inisial' => $inisial,
                     ];
-                    $secretcode = $generate->secretCode($data,$secretkey);
+                    $secretcode = $this->makeSecretCode($data,$secretkey);
                     $cookie->set("abiesoft-SUID-v3", $secretcode);
                     $this->success();
                 }else{
@@ -127,7 +126,6 @@ class SessionManager
 
     public function isLogin(){
         $input = new Input();
-        $reader = new Reader();
         $cookie = new Cookie();
         $database = (new DB)->terhubung();
         $email = $input->get('email');
@@ -136,8 +134,8 @@ class SessionManager
         $result = false;
         if($cookie->has('abiesoft-SUID-v3')) {
             $secretcode = $cookie->get('abiesoft-SUID-v3');
-            $inisial = $reader->secretCode($secretcode, $secretkey)['inisial'];
-            $email = $reader->secretCode($secretcode, $secretkey)['email'];
+            $inisial = $this->readSecretCode($secretcode, $secretkey)['inisial'];
+            $email = $this->readSecretCode($secretcode, $secretkey)['email'];
 
             if($database->query("SELECT id FROM log WHERE email = ? AND inisial = ? AND aktifitas = ? ", [$email, $inisial, "Login"])->hitung() > 0){
                 if($this->cariuser($email)){
@@ -172,12 +170,11 @@ class SessionManager
     }
 
     protected function userData(){
-        $reader = new Reader();
         $cookie = new Cookie();
         $secretkey = $_ENV['SECRET_KEY'];
         if($cookie->has('abiesoft-SUID-v3')) {
             $secretcode = $cookie->get('abiesoft-SUID-v3');
-            $email = $reader->secretCode($secretcode, $secretkey)['email'];
+            $email = $this->readSecretCode($secretcode, $secretkey)['email'];
             return $this->cariuser($email);
         }
     }

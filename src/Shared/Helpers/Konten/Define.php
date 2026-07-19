@@ -2,20 +2,21 @@
 
 declare(strict_types=1);
 
-namespace Abiesoft\App\Shared\Helpers;
+namespace Abiesoft\App\Shared\Helpers\Konten;
 
+use Abiesoft\App\Shared\Helpers\Keamanan\SecretCode;
 use Abiesoft\System\Database\DB;
 use Abiesoft\System\Http\Cookie;
 use Abiesoft\System\Session\SessionManager;
-use Abiesoft\System\Utilities\Reader;
 
 trait Define
 {
+
+    use SecretCode;
     public function defineOpsi(string $label = "")
     {
         $cookie = new Cookie();
         $sesi = new SessionManager();
-        $reader = new Reader();
         
         $secretkey = $_ENV['SECRET_KEY'] ?? '';
         $db = DB::terhubung();
@@ -25,17 +26,6 @@ trait Define
             $token = $cookie->get("_cf_v3") ?? "";
         }
 
-        $registrasi = false;
-        $uuidRegistrasi = "c33f3f11-1232-4a83-9cae-d535e36524cd";
-        
-        $queryResult = $db->query("SELECT status FROM seting WHERE uuid = ? ", [$uuidRegistrasi]);
-        if ($queryResult) {
-            $statusRegistrasi = $queryResult->angka();
-            if ($statusRegistrasi === 1) {
-                $registrasi = true;
-            }
-        }
-
         $cf = [
             'inisial' => '',
             'remember' => '',
@@ -43,7 +33,7 @@ trait Define
         ];
 
         if (!empty($token)) {
-            $decrypted = $reader->secretCode($token, $secretkey);
+            $decrypted = $this->readSecretCode($token, $secretkey);
             if (is_array($decrypted)) {
                 $cf['inisial'] = $decrypted['inisial'] ?? '';
                 $cf['remember'] = $decrypted['remember'] ?? '';
@@ -55,12 +45,11 @@ trait Define
             'mode'          => $_ENV['MODE'] ?? 'production',
             'output'        => $_ENV['OUTPUT_MODE'] ?? 'json',
             'baseurl'       => $_ENV['BASEURL'] ?? '/',
+            'page'          => $_ENV['LOGIN_PAGE'] ?? 'login',
             'token'         => $token,
             'inisial'       => $cf['inisial'],
             'remember'      => $cf['remember'],
-            'timestamp'     => $cf['timestamp'],
-            'page'          => $_ENV['LOGIN_PAGE'] ?? 'login',
-            'registrasi'    => $registrasi,
+            'timestamp'     => $cf['timestamp']
         ];
 
         $datasesi = [];
@@ -73,9 +62,6 @@ trait Define
                 'sesi_email'    => $sesi->getEmail() ?? '',
                 'sesi_photo'    => $sesi->getPhoto() ?? '',
                 'sesi_role'     => $sesi->getRole() ?? '',
-                'sesi_hp'       => $sesi->getHp() ?? '',
-                'sesi_alamat'   => $sesi->getAlamat() ?? '',
-                'sesi_unit'     => $sesi->getUnit() ?? '',
             ];
         }
 

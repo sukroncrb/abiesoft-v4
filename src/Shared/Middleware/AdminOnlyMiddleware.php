@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace Abiesoft\App\Shared\Middleware;
 
-use Abiesoft\App\Shared\Helpers\Define;
+use Abiesoft\App\Shared\Helpers\Konten\Define;
 use Abiesoft\System\Http\MiddlewareInterface;
-use Abiesoft\System\Session\SessionManager;
 
 class AdminOnlyMiddleware implements MiddlewareInterface
 {

@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace Abiesoft\System\Database;
 
-use Abiesoft\App\Shared\Helpers\Uuid;
+use Abiesoft\App\Shared\Helpers\Konten\Define;
+use Abiesoft\App\Shared\Helpers\Konten\Info;
+use Abiesoft\App\Shared\Helpers\Utilities\Uuid;
 use PDO;
 use PDOException;
 
 class DB
 {
-    use Uuid;
+    use Uuid, Info, Define;
     private static $terhubung = null;
 
     private
@@ -28,6 +30,8 @@ class DB
     private ?int $_qb_limit = null;
     private int $_qb_offset = 0;
     private array $_qb_params = [];
+
+    private static bool $_is_logging = false;
 
     public function __construct()
     {
@@ -53,6 +57,46 @@ class DB
         }
         return self::$terhubung;
     }
+
+    /*
+        ---------------------------------------------------------------
+        Mencatat semua proses transaksi ke database
+        ---------------------------------------------------------------
+    */
+    private function catatLog(string $pesan): void
+    {
+
+        if (self::$_is_logging) {
+            return;
+        }
+
+        self::$_is_logging = true;
+
+        try {
+            $logPath = __DIR__ . '/../../var/logs/database/' . date('Y-m-d') . '.log';
+        
+            $logDir = dirname($logPath);
+            if (!is_dir($logDir)) {
+                mkdir($logDir, 0755, true);
+            }
+
+            $isLoggedIn = $this->defineOpsi('sesi_nama') != '' ? 'Ya, Login' : 'Tanpa Login';
+            $user = $this->defineOpsi('sesi_nama') != '' ? $this->defineOpsi('sesi_nama') : 'N/A';
+            
+            $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+            $perangkat = $this->deviceModel($userAgent);
+            $ip = $this->getIp();
+            
+            $waktu = date('Y-m-d H:i:s');
+            $formatLog = "[{$waktu}] [{$isLoggedIn}] [User: {$user}] [Device: {$perangkat}] [IP: {$ip}] | Pesan: {$pesan}" . PHP_EOL;
+            
+            file_put_contents($logPath, $formatLog, FILE_APPEND);
+
+        } finally {
+            self::$_is_logging = false;
+        }
+    }
+
     private function eksekusiQueryBuilder(): void
     {
         if ($this->_qb_tabel !== "") {
@@ -94,14 +138,6 @@ class DB
         $this->_qb_params = [];
     }
 
-    /*
-
-
-        ---------------------------------------------------------------
-        contoh penggunaan :
-        $this->tabel('users')
-        ---------------------------------------------------------------
-    */
     public function tabel(string $tabel): self
     {
         $this->resetQueryBuilder();
@@ -109,30 +145,12 @@ class DB
         return $this;
     }
 
-    /*
-
-
-        ---------------------------------------------------------------
-        contoh penggunaan :
-        $this->tabel('users')
-        ->select('users.nama, users.photo, users.email');
-        ---------------------------------------------------------------
-    */
     public function select(string $select = "*"): self
     {
         $this->_qb_select = $select;
         return $this;
     }
 
-    /*
-
-
-        ---------------------------------------------------------------
-        contoh penggunaan :
-        $this->tabel('users')
-        ->where('users.status', '=', 'aktif');
-        ---------------------------------------------------------------
-    */
     public function where(string $kolom, string $simbol, $nilai): self
     {
         $this->_qb_where[] = "{$kolom} {$simbol} ?";
@@ -140,29 +158,12 @@ class DB
         return $this;
     }
 
-    /*
-
-
-        ---------------------------------------------------------------
-        contoh penggunaan :
-        $this->tabel('users')
-        ->join('alamat', 'users.id', '=', 'alamat.usersid');
-        ---------------------------------------------------------------
-    */
     public function join(string $tabelTarget, string $onKolom1, string $simbol, string $onKolom2): self
     {
         $this->_qb_join[] = "JOIN {$tabelTarget} ON {$onKolom1} {$simbol} {$onKolom2}";
         return $this;
     }
 
-    /*
-
-
-        ---------------------------------------------------------------
-        contoh penggunaan :
-        ->order('created_at', 'DESC')
-        ---------------------------------------------------------------
-    */
     public function order(string $kolom, string $arah = 'ASC'): self
     {
         $arahAman = strtoupper($arah) === 'DESC' ? 'DESC' : 'ASC';
@@ -170,15 +171,6 @@ class DB
         return $this;
     }
 
-    /*
-
-
-        ---------------------------------------------------------------
-        contoh penggunaan :
-        ->limit(5);
-        ->limit(5, 100);
-        ---------------------------------------------------------------
-    */
     public function limit(int $limit, int $offset = 0): self
     {
         $this->_qb_limit = $limit;
@@ -241,6 +233,17 @@ class DB
 
     public function query(string $sql, array $params = [])
     {
+
+        $sqlUtama = strtoupper(ltrim($sql));
+
+        if (
+            str_starts_with($sqlUtama, 'INSERT') || 
+            str_starts_with($sqlUtama, 'UPDATE') || 
+            str_starts_with($sqlUtama, 'DELETE')
+        ) {
+            $this->catatLog("Eksekusi Query: SQL -> [{$sql}] | Params -> " . json_encode($params));
+        }
+
         try {
             $this->_error = false;
             if ($this->_query = $this->_pdo->prepare($sql)) {
@@ -288,19 +291,10 @@ class DB
         return false;
     }
 
-    /*
-
-
-        ---------------------------------------------------------------
-        contoh penggunaan :
-        ->input('users', [
-            'nama' => 'User',
-            'email' => 'user@email.com'
-        ])
-        ---------------------------------------------------------------
-    */
     public function input(string $tabel, array $kolom, string|array $exist = "")
     {
+        $this->catatLog("Fungsi input() dipanggil untuk tabel '{$tabel}'");
+
         if ($exist !== "") {
             $checkSql = "SELECT id FROM {$tabel} WHERE ";
             $checkParams = [];
@@ -403,18 +397,20 @@ class DB
     }
 
     /*
-
-
         ---------------------------------------------------------------
         contoh penggunaan :
         ->perbarui('users', '1', [
-            'nama' => 'User',
-            'email' => 'user@email.com'
+            'nama' => 'User Baru',
+            'email' => 'userbaru@email.com'
         ])
         ---------------------------------------------------------------
     */
     public function perbarui(string $tabel, int|string $id, array $kolom)
     {
+        $kolom['diedit'] = date('Y-m-d H:i:s');
+        
+        $this->catatLog("Fungsi perbarui() dipanggil untuk tabel '{$tabel}' pada ID/UUID '{$id}'");
+
         $set = '';
         $x = 1;
         $params = []; 
@@ -432,6 +428,7 @@ class DB
         $kolomKunci = is_numeric($id) ? 'id' : 'uuid';
         $sql = "UPDATE {$tabel} SET {$set} WHERE {$kolomKunci} = ?";
         $params[] = $id;
+
         if (!$this->query($sql, $params)->error()) {
             return true;
         }
@@ -439,26 +436,45 @@ class DB
     }
 
     /*
-
-
         ---------------------------------------------------------------
-        contoh penggunaan :
+        contoh penggunaan (Hapus Total / Permanen):
         ->hapus('users', ['id', '=', '1'])
         ---------------------------------------------------------------
     */
     public function hapus(string $tabel, array $where)
     {
+        $this->catatLog("Fungsi hapus() [PERMANEN] dipanggil untuk tabel '{$tabel}' dengan kondisi " . json_encode($where));
         return  $this->action('DELETE ', $tabel, $where);
     }
 
     /*
-
-
         ---------------------------------------------------------------
-        contoh penggunaan :
-        ->tampilkan('users', ['id', '=', '1'])
+        contoh penggunaan
+        ->hapusSementara('users', ['id', '=', '1'])
         ---------------------------------------------------------------
     */
+    public function hapusSementara(string $tabel, array $where)
+    {
+        $this->catatLog("Fungsi hapusSementara() [SOFT DELETE] dipanggil untuk tabel '{$tabel}' dengan kondisi " . json_encode($where));
+        
+        if (count($where) === 3) {
+            $daftarsimbol = array('=', '>', '<', '<=', '>=');
+            $kolom  = $where[0];
+            $simbol = $where[1];
+            $nilai  = $where[2];
+            
+            if (in_array($simbol, $daftarsimbol)) {
+                $waktuSekarang = date('Y-m-d H:i:s');
+                $sql = "UPDATE {$tabel} SET `dihapus` = ? WHERE {$kolom} {$simbol} ?";
+                
+                if (!$this->query($sql, [$waktuSekarang, $nilai])->error()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public function tampilkan(string $tabel, array $where)
     {
         return $this->action('SELECT *', $tabel, $where);

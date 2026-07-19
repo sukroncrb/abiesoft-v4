@@ -23,24 +23,21 @@ trait Help
         echo self::COLOR_CYAN . "   Abiesoft Framework CLI" . self::COLOR_RESET . " version 1.1.0" . PHP_EOL;
         echo self::COLOR_RESET . "   Usage: php abiesoft " . self::COLOR_YELLOW . "[command]" . self::COLOR_RESET . " [options]" . PHP_EOL . PHP_EOL;
 
-        // Saya perlebar kolomnya jadi 32 karakter agar teks tidak berantakan
         $mask = "   " . self::COLOR_GREEN . "%-32s" . self::COLOR_RESET . " %s" . PHP_EOL;
 
-        // --- SECTION: MAIN ---
         echo self::COLOR_YELLOW . "   Available Commands:" . self::COLOR_RESET . PHP_EOL;
         printf($mask, "start", "Menjalankan server development lokal");
         printf($mask, "route", "Menampilkan daftar route yang terdaftar");
         printf($mask, "build", "Membuat file compile golang");
         printf($mask, "help", "Menampilkan menu bantuan ini");
 
-        // --- SECTION: MAKE (GENERATORS) ---
         echo PHP_EOL . self::COLOR_YELLOW . "   Generators:" . self::COLOR_RESET . PHP_EOL;
         printf($mask, "make:module <nama>", "Wizard interaktif membuat module lengkap");
         printf($mask, "make:action <module> <nama>", "Membuat file Action baru");
         printf($mask, "make:service <module> <nama>", "Membuat file Service/Repository baru");
+        printf($mask, "make:goservice <gomodule> <nama>", "Membuat file Service/Repository golang");
         printf($mask, "make:dto <module> <nama>", "Membuat file Data Transfer Object baru");
 
-        // --- SECTION: MAINTENANCE ---
         echo PHP_EOL . self::COLOR_YELLOW . "   Maintenance:" . self::COLOR_RESET . PHP_EOL;
         printf($mask, "delete:module <nama>", "Menghapus module beserta seluruh isinya");
         printf($mask, "delete:action <module> <nama>", "Menghapus file Action tertentu");

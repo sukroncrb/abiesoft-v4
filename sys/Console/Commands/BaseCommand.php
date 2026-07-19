@@ -32,8 +32,7 @@ abstract class BaseCommand
     {
         if (!is_dir($path)) {
             mkdir($path, 0755, true);
-            // Menampilkan path relatif agar output terminal tidak kepanjangan
-            $baseDir = dirname(__DIR__, 4); // Menyesuaikan kedalaman folder
+            $baseDir = dirname(__DIR__, 4);
             $relativePath = str_replace($baseDir, '', $path);
             $this->log("📂 Membuat folder: $relativePath", self::COLOR_YELLOW);
         }

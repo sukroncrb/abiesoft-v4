@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Abiesoft\System\Package\Email;
 
-use Abiesoft\App\Shared\Helpers\ApiResult;
+use Abiesoft\App\Shared\Helpers\Utilities\ApiResult;
 use Abiesoft\System\Package\Email\Template\Otp;
 use Abiesoft\System\Package\Email\Template\Test;
 use PHPMailer\PHPMailer\Exception;

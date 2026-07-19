@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Abiesoft\System\Auth;
 
-use Abiesoft\App\Shared\Helpers\ApiResult;
+use Abiesoft\App\Shared\Helpers\Utilities\ApiResult;
 use Abiesoft\System\Utilities\Generate;
 
 readonly class CsrfTokenAction

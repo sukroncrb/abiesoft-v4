@@ -4,21 +4,21 @@ declare(strict_types=1);
 
 namespace Abiesoft\System\Http;
 
-use Abiesoft\App\Shared\Helpers\ApiResult;
+use Abiesoft\App\Shared\Helpers\Keamanan\SecretCode;
+use Abiesoft\App\Shared\Helpers\Utilities\ApiResult;
 use Abiesoft\App\Shared\Middleware\ApiMiddleware;
 use Abiesoft\System\Auth\CsrfTokenAction;
 use Abiesoft\System\Auth\GetRefreshBearerTokenAction;
 use Abiesoft\System\Auth\GetRefreshTokenAction;
 use Abiesoft\System\Auth\LogoutAuthAction;
 use Abiesoft\System\Utilities\Generate;
-use Abiesoft\System\Utilities\Reader;
 use Abiesoft\System\View\ViewRenderer;
 use Abiesoft\Testing\Testing;
 
 class Router
 {
 
-    use ApiResult;
+    use ApiResult, SecretCode;
     
     private array $routes = [];
     private string $groupPrefix = '';
@@ -164,14 +164,13 @@ class Router
         ];
 
         $cookie = new Cookie();
-        $reader = new Reader();
         $generate = new Generate();
 
         if($cookie->has("_cf_v3")){
             $cf = $cookie->get("_cf_v3"); 
             $secretKey = $_ENV['SECRET_KEY'];
 
-            $decodedData = $reader->secretCode($cf, $secretKey);
+            $decodedData = $this->readSecretCode($cf, $secretKey);
             
             if (!is_array($decodedData)) {
                 $decodedData = [];
@@ -198,7 +197,7 @@ class Router
                 ]
             ];
             
-            $kode = $generate->secretCode($data, $secretKey);
+            $kode = $this->makeSecretCode($data, $secretKey);
             $cookie->set("_cf_v3", $kode);
 
             return;
@@ -215,7 +214,7 @@ class Router
                 ]
             ];
             
-            $kode = $generate->secretCode($data, $_ENV['SECRET_KEY']); 
+            $kode = $this->makeSecretCode($data, $_ENV['SECRET_KEY']); 
             $cookie->set("_cf_v3", $kode);
 
             return;
