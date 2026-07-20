@@ -30,19 +30,19 @@ class Token extends Service
     {
         $cookie = new Cookie;
         $secretkey = $_ENV['SECRET_KEY'];
-        $generate = new Generate;
-        $dataReader = $this->readSecretCode($cookie->get('_cf_v3'),$secretkey);
+        $dataReader = (object)$this->readSecretCode($cookie->get('_cf_v3'),$secretkey);
+        $seting = (object)$dataReader->seting;
         $datacf = [
             'apikey' => $dataReader->apikey,
             'inisial' => $dataReader->inisial,
             'remember' => $dataReader->remember,
             'timestamp' => time(),
             'seting' => [
-                'notifikasi' => $dataReader->notifikasi,
-                'suara' => $dataReader->suara
+                'notifikasi' => $seting->notifikasi,
+                'suara' => $seting->suara
             ]
         ];
-        $newcf = $this->readSecretCode($datacf, $secretkey);
+        $newcf = $this->makeSecretCode($datacf, $secretkey);
         $cookie->set("_cf_v3", $newcf);
         $this->success($newcf);
     }

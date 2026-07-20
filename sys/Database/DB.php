@@ -236,12 +236,20 @@ class DB
 
         $sqlUtama = strtoupper(ltrim($sql));
 
-        if (
-            str_starts_with($sqlUtama, 'INSERT') || 
-            str_starts_with($sqlUtama, 'UPDATE') || 
-            str_starts_with($sqlUtama, 'DELETE')
-        ) {
-            $this->catatLog("Eksekusi Query: SQL -> [{$sql}] | Params -> " . json_encode($params));
+        if (str_starts_with($sqlUtama, 'INSERT')) {
+            $this->catatLog("Menambahkan data");
+        }
+
+        if (str_starts_with($sqlUtama, 'UPDATE')) {
+            $this->catatLog("Memperbarui data");
+        }
+
+        if (str_starts_with($sqlUtama, 'SELECT')) {
+            $this->catatLog("Melihat data");
+        }
+
+        if (str_starts_with($sqlUtama, 'SELECT')) {
+            $this->catatLog("Menghapus data");
         }
 
         try {
