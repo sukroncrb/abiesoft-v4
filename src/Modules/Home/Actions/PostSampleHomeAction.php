@@ -13,15 +13,7 @@ readonly class PostSampleHomeAction
     use ApiResult;
     public function __invoke(): void
     {
-        $input = new Input();
         $repo = new WellcomeRepository();
-        $tech = $input->get("tech", "PHP");
-        if ($tech === "on" || strtolower($tech) === "golang") {
-            $_POST['tech'] = "Golang"; 
-            $repo->postSampleDataWithGolang();
-        } else {
-            $_POST['tech'] = "PHP"; 
-            $repo->postSampleDataWithPhp();
-        }
+        $repo->postSampleDataWithPhp();
     }
 }

@@ -15,12 +15,7 @@ ErrorHandler::register();
 $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->safeLoad();
 
-$pigo = new PiGoEngine();
-try {
-    $pigo->pastikanGoEngineRun();
-} catch (Exception $e) {
-    die("Framework Error: " . $e->getMessage());
-}
+
 
 $router = new Router();
 

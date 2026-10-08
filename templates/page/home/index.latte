@@ -370,21 +370,29 @@
     <script n:syntax="off">
         let outputJsonView = el("#output-json");
         let info = "start";
+        function advanceInfo() {
+            if(info == "start"){
+                info = "pengenalan";
+            }else if(info == "pengenalan"){
+                info = "fitur1";
+            }else if(info == "fitur1"){
+                info = "fitur2";
+            }else if(info == "fitur2"){
+                info = "ending";
+            }else {
+                info = "start";
+            }
+        }
+
         function getDataGolangApi(getby){
-            getData("wellcome/"+info+"/"+getby).then(result =>{
+            const targetEndpoint = (getby === "go") 
+                ? "api-go/wellcome/" + info 
+                : "api/wellcome/" + info + "/" + getby;
+
+            getData(targetEndpoint).then(result =>{
                 outputJsonView.innerHTML = result.data;
-                if(info == "start"){
-                    info = "pengenalan";
-                }else if(info == "pengenalan"){
-                    info = "fitur1";
-                }else if(info == "fitur1"){
-                    info = "fitur2";
-                }else if(info == "fitur2"){
-                    info = "ending";
-                }else {
-                    info = "start";
-                }
-            },500);
+                advanceInfo();
+            });
         }
 
         getDataGolangApi("go");
@@ -512,7 +520,8 @@
                 document.getElementById("konfirmasiNama").innerHTML = item.nama;
                 deleteModal.querySelector("[data-form='hapusSample']").dataset.label = item.nama;
                 deleteModal.querySelector("[data-form='hapusSample']").dataset.id = currentDeleteId;
-                console.log(deleteModal.querySelector("[data-form='hapusSample']"));
+                const isGo = item && item.tech && item.tech.toLowerCase() === 'golang';
+                deleteModal.querySelector("[data-form='hapusSample']").dataset.tabel = isGo ? "api-go/sample" : "api/sample";
                 deleteModal.classList.remove('hidden');
             }
         }
@@ -526,7 +535,9 @@
         deleteModal.addEventListener('click', (e) => { if(e.target === deleteModal) closeModal('delete'); });
 
         function submitSample(formdata, form){
-            postData(formdata, "sample", form).then(result => {
+            const isGo = inputSwitch && inputSwitch.checked;
+            const targetEndpoint = isGo ? "api-go/sample" : "api/sample";
+            postData(formdata, targetEndpoint, form).then(result => {
                 if(result.code == 200){
                     closeModal('form');
                     if(form.dataset.id) {

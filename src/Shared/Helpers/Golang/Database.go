@@ -12,9 +12,9 @@ import (
 
 func ConnectDB() *sql.DB {
 
-	err := godotenv.Load("./../.env")
-	if err != nil {
-		log.Println("Peringatan: File .env tidak ditemukan, menggunakan env system")
+	// Coba load .env dari direktori root aplikasi atau parent path
+	if err := godotenv.Load(".env"); err != nil {
+		_ = godotenv.Load("./../.env", "../../.env")
 	}
 
 	dbUser := os.Getenv("DB_USER")

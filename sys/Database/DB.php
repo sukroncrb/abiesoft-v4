@@ -65,7 +65,6 @@ class DB
     */
     private function catatLog(string $pesan): void
     {
-
         if (self::$_is_logging) {
             return;
         }
@@ -85,7 +84,7 @@ class DB
             
             $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
             $perangkat = $this->deviceModel($userAgent);
-            $ip = $this->getIp();
+            $ip = $this->deviceModel($userAgent);
             
             $waktu = date('Y-m-d H:i:s');
             $formatLog = "[{$waktu}] [{$isLoggedIn}] [User: {$user}] [Device: {$perangkat}] [IP: {$ip}] | Pesan: {$pesan}" . PHP_EOL;
@@ -155,6 +154,26 @@ class DB
     {
         $this->_qb_where[] = "{$kolom} {$simbol} ?";
         $this->_qb_params[] = $nilai;
+        return $this;
+    }
+
+    public function pencarian(array $kolom, string $keyword): self
+    {
+        $keyword = trim($keyword);
+        if (empty($kolom) || $keyword === '') {
+            return $this;
+        }
+
+        $conditions = [];
+        $searchTerm = "%{$keyword}%";
+
+        foreach ($kolom as $k) {
+            $conditions[] = "{$k} LIKE ?";
+            $this->_qb_params[] = $searchTerm;
+        }
+
+        $this->_qb_where[] = "(" . implode(" OR ", $conditions) . ")";
+
         return $this;
     }
 
@@ -233,24 +252,7 @@ class DB
 
     public function query(string $sql, array $params = [])
     {
-
-        $sqlUtama = strtoupper(ltrim($sql));
-
-        if (str_starts_with($sqlUtama, 'INSERT')) {
-            $this->catatLog("Menambahkan data");
-        }
-
-        if (str_starts_with($sqlUtama, 'UPDATE')) {
-            $this->catatLog("Memperbarui data");
-        }
-
-        if (str_starts_with($sqlUtama, 'SELECT')) {
-            $this->catatLog("Melihat data");
-        }
-
-        if (str_starts_with($sqlUtama, 'SELECT')) {
-            $this->catatLog("Menghapus data");
-        }
+        $this->catatLog("Eksekusi Query: SQL -> [{$sql}] | Params -> " . json_encode($params));
 
         try {
             $this->_error = false;
@@ -404,15 +406,6 @@ class DB
         return false;
     }
 
-    /*
-        ---------------------------------------------------------------
-        contoh penggunaan :
-        ->perbarui('users', '1', [
-            'nama' => 'User Baru',
-            'email' => 'userbaru@email.com'
-        ])
-        ---------------------------------------------------------------
-    */
     public function perbarui(string $tabel, int|string $id, array $kolom)
     {
         $kolom['diedit'] = date('Y-m-d H:i:s');
@@ -443,24 +436,12 @@ class DB
         return false;
     }
 
-    /*
-        ---------------------------------------------------------------
-        contoh penggunaan (Hapus Total / Permanen):
-        ->hapus('users', ['id', '=', '1'])
-        ---------------------------------------------------------------
-    */
     public function hapus(string $tabel, array $where)
     {
         $this->catatLog("Fungsi hapus() [PERMANEN] dipanggil untuk tabel '{$tabel}' dengan kondisi " . json_encode($where));
         return  $this->action('DELETE ', $tabel, $where);
     }
 
-    /*
-        ---------------------------------------------------------------
-        contoh penggunaan
-        ->hapusSementara('users', ['id', '=', '1'])
-        ---------------------------------------------------------------
-    */
     public function hapusSementara(string $tabel, array $where)
     {
         $this->catatLog("Fungsi hapusSementara() [SOFT DELETE] dipanggil untuk tabel '{$tabel}' dengan kondisi " . json_encode($where));

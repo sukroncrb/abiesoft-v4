@@ -493,7 +493,8 @@ async function getData(endpoint) {
         
         perbaruiToken();
         
-        const response = await fetch(app.state.baseurl + "api/" + endpoint, {
+        const prefix = endpoint.startsWith("api/") || endpoint.startsWith("api-go/") ? "" : "api/";
+        const response = await fetch(app.state.baseurl + prefix + endpoint, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${app.state.token}`
@@ -574,7 +575,8 @@ async function postData(formdata, endpoint, form, labelCustom = "Menyimpan") {
                 btnSubmit.setAttribute('disabled', true);
             }
         }
-        const response = await fetch(app.state.baseurl + "api/" + endpoint, {
+        const prefix = endpoint.startsWith("api/") || endpoint.startsWith("api-go/") ? "" : "api/";
+        const response = await fetch(app.state.baseurl + prefix + endpoint, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${app.state.token}`
@@ -646,7 +648,8 @@ async function postDelete(form) {
 
         perbaruiToken();
 
-        const response = await fetch(app.state.baseurl + "api/" + tabel, {
+        const delPrefix = tabel.startsWith("api/") || tabel.startsWith("api-go/") ? "" : "api/";
+        const response = await fetch(app.state.baseurl + delPrefix + tabel, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${app.state.token}`
@@ -774,34 +777,41 @@ function csrfToken(form, fc) {
         if(forms.length > 0){
             for(let i=0; i<forms.length; i++){
                 getData('csrf/'+forms[i].dataset.form).then(result => {
-                    if(forms[i].dataset.form.includes("hapus")){
-                        forms[i].setAttribute('id', result.data.fid);
-                        forms[i].setAttribute('data-csrf', result.data.csrf);
-                        localStorage.setItem(result.data.fid, result.data.csrf);
-                        forms[i].addEventListener('click', ()=>{
-                            postDelete(forms[i]);
-                        });
-                    }else if(forms[i].dataset.form.includes("post")){
-                        forms[i].setAttribute('id', result.data.fid);
-                        forms[i].setAttribute('data-csrf', result.data.csrf);
-                        localStorage.setItem(result.data.fid, result.data.csrf);
-                        app.toSubmit(forms[i]);
-                    }else{
-                        forms[i].setAttribute('id', result.data.fid);
-                        localStorage.setItem(result.data.fid, result.data.csrf);
+                    if(result && result.data && result.data.fid){
+                        if(forms[i].dataset.form.includes("hapus")){
+                            forms[i].setAttribute('id', result.data.fid);
+                            forms[i].setAttribute('data-csrf', result.data.csrf);
+                            localStorage.setItem(result.data.fid, result.data.csrf);
+                            forms[i].addEventListener('click', ()=>{
+                                postDelete(forms[i]);
+                            });
+                        }else if(forms[i].dataset.form.includes("post")){
+                            forms[i].setAttribute('id', result.data.fid);
+                            forms[i].setAttribute('data-csrf', result.data.csrf);
+                            localStorage.setItem(result.data.fid, result.data.csrf);
+                            app.toSubmit(forms[i]);
+                        }else{
+                            forms[i].setAttribute('id', result.data.fid);
+                            localStorage.setItem(result.data.fid, result.data.csrf);
 
-                        let existingCsrf = forms[i].querySelector('input[name="__csrf"]');
-                        if(existingCsrf) {
-                            existingCsrf.value = result.data.csrf;
-                        } else {
-                            let csrfInput = document.createElement('input');
-                            csrfInput.type = 'hidden';
-                            csrfInput.name = '__csrf';
-                            csrfInput.value = result.data.csrf;
-                            forms[i].insertBefore(csrfInput, forms[i].children[forms[i].children.length - 1]);
+                            let existingCsrf = forms[i].querySelector('input[name="__csrf"]');
+                            if(existingCsrf) {
+                                existingCsrf.value = result.data.csrf;
+                            } else {
+                                let csrfInput = document.createElement('input');
+                                csrfInput.type = 'hidden';
+                                csrfInput.name = '__csrf';
+                                csrfInput.value = result.data.csrf;
+                                forms[i].insertBefore(csrfInput, forms[i].children[forms[i].children.length - 1]);
+                            }
+                            app.toSubmit(forms[i]);
                         }
+                    } else {
                         app.toSubmit(forms[i]);
                     }
+                }).catch(err => {
+                    console.error("Gagal mendapatkan token CSRF untuk form:", err);
+                    app.toSubmit(forms[i]);
                 });
             }
         }

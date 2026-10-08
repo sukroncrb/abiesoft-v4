@@ -37,39 +37,20 @@ class WellcomeRepository extends Service
 
     public function getAllSampleData()
     {
-        $result = $this->call("sample-all-data", ['init' => '1']);
-        
-        if (isset($result['status']) && $result['status'] === "error") {
-            $this->badrequest($result['msg'] ?? "Gagal memproses data");
-            return;
-        }
-
-        $this->success($result['data'] ?? []);
+        $data = $this->db->tabel("sample")->order("id", "DESC")->hasil();
+        $this->success($data ?? []);
     }
 
     public function getOnlySampleData($id)
     {
-        $result = (object)$this->call("sample-only-data",[
-            'id' => $id
-        ]);
-        if (isset($result->data)) {
-            $this->success($result->data);
-        } else {
-            $this->success($result);
-        }
+        $data = $this->db->tabel("sample")->where("id", "=", $id)->hasil();
+        $this->success($data ?? []);
     }
 
     public function getSampleBigData($offset, $limit)
     {
-        $result = (object)$this->call("sample-big-data",[
-            'offset' => $offset,
-            'limit' => $limit
-        ]);
-        if (isset($result->data)) {
-            $this->success($result->data);
-        } else {
-            $this->success($result);
-        }
+        $data = $this->db->tabel("sample")->limit((int)$limit, (int)$offset)->hasil();
+        $this->success($data ?? []);
     }
 
     public function postSampleDataWithGolang()
@@ -118,9 +99,16 @@ class WellcomeRepository extends Service
         $input = new Input();
         $db = (new DB)->terhubung();
         $nama = $input->get('nama');
-        $tech = "PHP";
+        $rawTech = $input->get('tech');
+        $tech = ($rawTech === 'on' || strtolower($rawTech) === 'golang') ? 'Golang' : 'PHP';
         $id = $input->get('id');
         $method = $input->get('__method');
+
+        if (trim($nama) === "" && $method !== "DELETE") {
+            $this->badrequest("Field nama tidak boleh kosong");
+            return;
+        }
+
         if($id != ""){
             if($method == "DELETE"){
                 $hapus = $db->hapus("sample", ['id','=',$id]);

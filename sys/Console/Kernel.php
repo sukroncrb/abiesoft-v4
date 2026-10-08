@@ -7,12 +7,14 @@ use Abiesoft\System\Console\Commands\DeleteActionCommand;
 use Abiesoft\System\Console\Commands\DeleteDtoCommand;
 use Abiesoft\System\Console\Commands\DeleteModuleCommand;
 use Abiesoft\System\Console\Commands\DeleteServiceCommand;
+use Abiesoft\System\Console\Commands\DeleteTestCommand;
 use Abiesoft\System\Console\Commands\MakeActionCommand;
 use Abiesoft\System\Console\Commands\MakeAuthSystem;
 use Abiesoft\System\Console\Commands\MakeDtoCommand;
-use Abiesoft\System\Console\Commands\MakeGoServiceCommand;
 use Abiesoft\System\Console\Commands\MakeModuleCommand;
 use Abiesoft\System\Console\Commands\MakeServiceCommand;
+use Abiesoft\System\Console\Commands\MakeTestCommand;
+use Abiesoft\System\Console\Commands\TestCommand;
 use Abiesoft\System\Console\Commands\Utilities\Compile;
 use Abiesoft\System\Console\Commands\Utilities\Help;
 use Abiesoft\System\Console\Commands\Utilities\Routes;
@@ -31,16 +33,18 @@ class Kernel
             'start'        => $this->startServer(),
             'route'        => $this->showRoutes(),
             'build'        => $this->compileGo(),
+            'test'         => (new TestCommand())->handle($args),
             
             'make:action'  => (new MakeActionCommand())->handle($args),
             'make:dto'     => (new MakeDtoCommand())->handle($args),
             'make:service' => (new MakeServiceCommand())->handle($args),
             'make:module'  => (new MakeModuleCommand())->handle($args),
-            'make:goservice'  => (new MakeGoServiceCommand())->handle($args),
+            'make:test'    => (new MakeTestCommand())->handle($args),
             'delete:module' => (new DeleteModuleCommand())->handle($args),
             'delete:action'  => (new DeleteActionCommand())->handle($args),
             'delete:dto'     => (new DeleteDtoCommand())->handle($args),
             'delete:service' => (new DeleteServiceCommand())->handle($args),
+            'delete:test'    => (new DeleteTestCommand())->handle($args),
 
             'database:import' => (new DatabaseImportCommand())->handle($args),
             'make:authsystem' => (new MakeAuthSystem())->handle($args),

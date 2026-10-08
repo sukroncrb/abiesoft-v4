@@ -1,7 +1,9 @@
 # abiesoft-4.0
 
 ### Apa itu abiesoft?
-AbieSoft adalah framework hybrid yang menggunakan bahasa php, golang, javascript dan engine template latte. Abiesoft menggunakan arsitektur Action-Domain-Responder (ADR) dengan sistem Hybrid Engine berbasis Unix Socket.
+AbieSoft adalah framework hybrid yang memadukan bahasa PHP, Golang, JavaScript, dan engine template Latte. AbieSoft mengusung arsitektur Action-Domain-Responder (ADR) dengan **Hybrid Engine Gateway**:
+- **Prefix `/api-go/*`**: Ditangani **langsung 100% oleh Golang Native HTTP Engine** tanpa melalui PHP, memanfaatkan goroutine & non-blocking I/O untuk performa dan konkurensi maksimal.
+- **Prefix `/api/*` & Web UI**: Ditangani oleh **PHP Core Engine & ADR Router** untuk fleksibilitas templating Latte dan session auth.
 
 ### Instalasi
 1. Download file **abiesoft-v4.zip**, kemudian extract zip. atau menggunakan <pre><code>git clone https://github.com/sukroncrb/abiesoft-v4.git</code></pre>
@@ -14,7 +16,7 @@ AbieSoft adalah framework hybrid yang menggunakan bahasa php, golang, javascript
 
 ### Struktur Folder
 
-Berikut adalah pemetaan visual dari struktur folder framework **AbieSoft** berdasarkan desain arsitektur *Hybrid Core Engine* (PHP & Golang via Unix Socket):
+Berikut adalah pemetaan visual dari struktur folder framework **AbieSoft** berdasarkan desain arsitektur *Hybrid Core Engine* (Golang Gateway & PHP Core):
 
 ```text
 abiesoft/

@@ -33,3 +33,4 @@ $router->get('/api/sample/{offset}/{limit}', SampleBigDataHomeAction::class, [
 $router->get('/api/sample/{id}', SampleOnlyDataHomeAction::class, [
     ApiMiddleware::class
 ]);
+

@@ -38,29 +38,30 @@ class Generate
     {
         $db = (new DB)->terhubung();
         $cookie = new Cookie();
-        $secretkey = $_ENV['SECRET_KEY'];
+        $secretkey = $_ENV['SECRET_KEY'] ?? '';
         $result = "";
-        $inisial = $this->readSecretCode($cookie->get("_cf_v3"), $secretkey)['inisial'];
         
-        if($inisial){
-            $token = $this->acak();
-            $idtoken = $db->query("SELECT id FROM token WHERE fid = ?", [$formid]);
-            if($idtoken->hitung() > 0){
-                $input = $db->perbarui('token', $db->query("SELECT id FROM token WHERE fid = ?", [$formid])->teks(), [
-                    'inisial' => $inisial,
-                    'fid' => $formid,
-                    'token' => $token
-                ]);
-            }else{
-                $input = $db->input('token', [
-                    'inisial' => $inisial,
-                    'fid' => $formid,
-                    'token' => $token
-                ]);
-            }
-            if($input){
-                $result = $token;
-            }
+        $cf = $cookie->get("_cf_v3");
+        $decoded = $cf ? $this->readSecretCode($cf, $secretkey) : null;
+        $inisial = (is_array($decoded) && !empty($decoded['inisial'])) ? (string)$decoded['inisial'] : '123456';
+        
+        $token = $this->acak();
+        $idtoken = $db->query("SELECT id FROM token WHERE fid = ?", [$formid]);
+        if($idtoken->hitung() > 0){
+            $input = $db->perbarui('token', $idtoken->teks(), [
+                'inisial' => $inisial,
+                'fid' => $formid,
+                'token' => $token
+            ]);
+        }else{
+            $input = $db->input('token', [
+                'inisial' => $inisial,
+                'fid' => $formid,
+                'token' => $token
+            ]);
+        }
+        if($input){
+            $result = (string)$token;
         }
         return $result;
     }
@@ -68,9 +69,10 @@ class Generate
     public function formID($method): string
     {
         $cookie = new Cookie();
-        $secretkey = $_ENV['SECRET_KEY'];
+        $secretkey = $_ENV['SECRET_KEY'] ?? '';
         $cf = $cookie->get("_cf_v3");
-        $kode = $this->readSecretCode($cf, $secretkey)['inisial'];
+        $decoded = $cf ? $this->readSecretCode($cf, $secretkey) : null;
+        $kode = (is_array($decoded) && !empty($decoded['inisial'])) ? (string)$decoded['inisial'] : '123456';
         $result = "form-".sha1($method.$kode);
         return $result;
     }
