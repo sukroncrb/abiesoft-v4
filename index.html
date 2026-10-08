@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AbieSoft Framework v4.0 - Dokumentasi Resmi</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a',
+                        },
+                        go: {
+                            500: '#00ADD8',
+                            600: '#0090b5',
+                            700: '#007593',
+                        },
+                        php: {
+                            500: '#777BB4',
+                            600: '#5A5E94',
+                            700: '#4F5B93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                        mono: ['Fira Code', 'Courier New', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        pre code {
+            font-family: 'Fira Code', monospace;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-200 font-sans antialiased selection:bg-brand-500 selection:text-white">
+
+    <!-- TOP HEADER -->
+    <header class="sticky top-0 z-50 bg-slate-900/90 backdrop-blur-md border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-go-500 flex items-center justify-center font-black text-white text-xl shadow-lg shadow-brand-500/20">
+                    A
+                </div>
+                <div>
+                    <span class="text-xl font-bold tracking-tight text-white">AbieSoft <span class="text-brand-500 text-sm font-semibold px-2 py-0.5 rounded-full bg-brand-500/10 border border-brand-500/20">v4.0 Hybrid</span></span>
+                </div>
+            </div>
+
+            <!-- SEARCH INPUT -->
+            <div class="hidden md:flex items-center relative w-72">
+                <svg class="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <input type="text" id="searchInput" placeholder="Cari perintah atau topik..." class="w-full bg-slate-950 text-xs text-slate-200 pl-9 pr-4 py-2 rounded-lg border border-slate-700 focus:outline-none focus:border-brand-500 transition-colors">
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Gateway Active :3000
+                </span>
+                <a href="#quick-start" class="hidden sm:inline-flex items-center px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-brand-600 hover:bg-brand-500 text-white transition-all shadow-md shadow-brand-600/20">
+                    Mulai Sekarang
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex gap-8">
+
+        <!-- SIDEBAR NAVIGATION -->
+        <aside class="hidden lg:block w-64 shrink-0">
+            <div class="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto pr-3 space-y-6 text-sm">
+                <div>
+                    <h3 class="font-semibold text-xs uppercase tracking-wider text-slate-400 mb-2">Ikhtisar</h3>
+                    <ul class="space-y-1 text-slate-400">
+                        <li><a href="#pengenalan" class="block px-3 py-1.5 rounded-md hover:bg-slate-900 hover:text-white transition-colors">Pengenalan Framework</a></li>
+                        <li><a href="#arsitektur" class="block px-3 py-1.5 rounded-md hover:bg-slate-900 hover:text-white transition-colors">Arsitektur Gateway Hybrid</a></li>
+                        <li><a href="#struktur-folder" class="block px-3 py-1.5 rounded-md hover:bg-slate-900 hover:text-white transition-colors">Struktur Folder</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-xs uppercase tracking-wider text-slate-400 mb-2">Memulai</h3>
+                    <ul class="space-y-1 text-slate-400">
+                        <li><a href="#instalasi" class="block px-3 py-1.5 rounded-md hover:bg-slate-900 hover:text-white transition-colors">Instalasi & Setup</a></li>
+                        <li><a href="#menjalankan-server" class="block px-3 py-1.5 rounded-md hover:bg-slate-900 hover:text-white transition-colors">Menjalankan Server (Start)</a></li>
+                        <li><a href="#melihat-rute" class="block px-3 py-1.5 rounded-md hover:bg-slate-900 hover:text-white transition-colors">Daftar Rute (Route)</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-xs uppercase tracking-wider text-slate-400 mb-2">Generator CLI (Make)</h3>
+                    <ul class="space-y-1 text-slate-400">
+                        <li><a href="#cli-module" class="block px-3 py-1.5 rounded-md hover:bg-slate-900 hover:text-white transition-colors">make:module [--go]</a></li>
+                        <li><a href="#cli-action" class="block px-3 py-1.5 rounded-md hover:bg-slate-900 hover:text-white transition-colors">make:action [--go]</a></li>
+                        <li><a href="#cli-service" class="block px-3 py-1.5 rounded-md hover:bg-slate-900 hover:text-white transition-colors">make:service [--go]</a></li>
+                        <li><a href="#cli-dto" class="block px-3 py-1.5 rounded-md hover:bg-slate-900 hover:text-white transition-colors">make:dto [--go]</a></li>
+                        <li><a href="#cli-test" class="block px-3 py-1.5 rounded-md hover:bg-slate-900 hover:text-white transition-colors">make:test [--go]</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-xs uppercase tracking-wider text-slate-400 mb-2">Maintenance (Delete)</h3>
+                    <ul class="space-y-1 text-slate-400">
+                        <li><a href="#cli-delete-module" class="block px-3 py-1.5 rounded-md hover:bg-slate-900 hover:text-white transition-colors">delete:module [--go]</a></li>
+                        <li><a href="#cli-delete-sub" class="block px-3 py-1.5 rounded-md hover:bg-slate-900 hover:text-white transition-colors">delete:action / service / dto</a></li>
+                        <li><a href="#cli-delete-test" class="block px-3 py-1.5 rounded-md hover:bg-slate-900 hover:text-white transition-colors">delete:test [--go]</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-xs uppercase tracking-wider text-slate-400 mb-2">Fitur Lanjutan</h3>
+                    <ul class="space-y-1 text-slate-400">
+                        <li><a href="#unit-testing" class="block px-3 py-1.5 rounded-md hover:bg-slate-900 hover:text-white transition-colors">Automated Unit Testing</a></li>
+                        <li><a href="#database-import" class="block px-3 py-1.5 rounded-md hover:bg-slate-900 hover:text-white transition-colors">Database Import & Schema</a></li>
+                        <li><a href="#build-golang" class="block px-3 py-1.5 rounded-md hover:bg-slate-900 hover:text-white transition-colors">Kompilasi Engine (Build)</a></li>
+                        <li><a href="#cheat-sheet" class="block px-3 py-1.5 rounded-md hover:bg-slate-900 hover:text-white transition-colors">Cheat Sheet Perintah CLI</a></li>
+                    </ul>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="flex-1 min-w-0 max-w-4xl space-y-16">
+
+            <!-- HERO SECTION -->
+            <section id="pengenalan" class="pt-2">
+                <div class="p-8 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-slate-800 relative overflow-hidden shadow-2xl">
+                    <div class="absolute -right-20 -top-20 w-80 h-80 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="absolute -right-10 -bottom-10 w-60 h-60 bg-go-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="px-2.5 py-1 text-xs font-semibold rounded-md bg-php-600/20 text-indigo-300 border border-php-600/30">PHP 8.2+</span>
+                        <span class="text-slate-500 font-bold">+</span>
+                        <span class="px-2.5 py-1 text-xs font-semibold rounded-md bg-go-500/20 text-cyan-300 border border-go-500/30">Golang 1.22+ Native</span>
+                        <span class="text-slate-500 font-bold">+</span>
+                        <span class="px-2.5 py-1 text-xs font-semibold rounded-md bg-brand-500/20 text-brand-300 border border-brand-500/30">Latte Engine</span>
+                    </div>
+
+                    <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+                        Dokumentasi Resmi <span class="bg-gradient-to-r from-brand-400 to-go-500 bg-clip-text text-transparent">AbieSoft Framework v4.0</span>
+                    </h1>
+                    <p class="mt-4 text-base text-slate-300 leading-relaxed">
+                        AbieSoft v4 adalah <strong>Hybrid High-Performance Web Framework</strong> yang menggabungkan kecepatan pemrosesan I/O non-blocking dan konkurensi native <span class="text-go-500 font-semibold">Golang</span> dengan keluwesan bisnis serta kekuatan templating view <span class="text-indigo-400 font-semibold">PHP 8.2</span>.
+                    </p>
+
+                    <div class="mt-6 flex flex-wrap gap-4 text-xs font-mono">
+                        <div class="flex items-center gap-2 bg-slate-950/60 px-3.5 py-2 rounded-lg border border-slate-800">
+                            <span class="text-brand-400">⚡ Golang Gateway</span>
+                            <span class="text-slate-500">:3000 (Publik)</span>
+                        </div>
+                        <div class="flex items-center gap-2 bg-slate-950/60 px-3.5 py-2 rounded-lg border border-slate-800">
+                            <span class="text-indigo-400">🐘 PHP Backend</span>
+                            <span class="text-slate-500">:8002 (Internal)</span>
+                        </div>
+                        <div class="flex items-center gap-2 bg-slate-950/60 px-3.5 py-2 rounded-lg border border-slate-800">
+                            <span class="text-emerald-400">🛡️ Auto Port Cleaner</span>
+                            <span class="text-slate-500">Zero Zombie Port</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ARSITEKTUR HYBRID GATEWAY -->
+            <section id="arsitektur" class="scroll-mt-24 space-y-6">
+                <div class="border-b border-slate-800 pb-4">
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+                        <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-brand-500/10 text-brand-400 border border-brand-500/20 text-sm">01</span>
+                        Arsitektur Gateway Hybrid (Bypass vs Proxy)
+                    </h2>
+                    <p class="text-slate-400 text-sm mt-1">Bagaimana alur request diproses secara pintar tanpa membebani PHP.</p>
+                </div>
+
+                <div class="p-6 rounded-xl bg-slate-900 border border-slate-800 space-y-4">
+                    <h3 class="font-semibold text-white text-base">Alur Distribusi Request (HTTP Routing Pipeline)</h3>
+                    
+                    <!-- DIAGRAM -->
+                    <div class="p-6 rounded-lg bg-slate-950 border border-slate-800/80 font-mono text-xs space-y-3">
+                        <div class="text-center font-bold text-slate-300 pb-2 border-b border-slate-800">
+                            Client Request (Browser / Mobile / Curl) &rarr; http://127.0.0.1:3000
+                        </div>
+                        <div class="text-center text-brand-400 font-semibold py-1">
+                            &darr; Diterima oleh <span class="bg-brand-950 text-brand-300 px-2 py-0.5 rounded border border-brand-800">AbieSoft Go Gateway Engine</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                            <!-- Jalur Golang Direct -->
+                            <div class="p-4 rounded-lg bg-cyan-950/40 border border-cyan-800/40 space-y-2">
+                                <div class="font-bold text-cyan-400 flex items-center justify-between">
+                                    <span>Rute: /api-go/*</span>
+                                    <span class="text-[10px] bg-cyan-900/60 text-cyan-300 px-1.5 py-0.5 rounded">DIRECT BYPASS</span>
+                                </div>
+                                <p class="text-slate-300 text-[11px] leading-relaxed">
+                                    Ditangani <strong>100% langsung oleh Native Go Mux</strong> di <code>src/Modules/handler.go</code>.
+                                </p>
+                                <ul class="text-[11px] text-cyan-200/80 list-disc list-inside space-y-1">
+                                    <li>Bypass PHP sepenuhnya (Zero overhead PHP)</li>
+                                    <li>Goroutine concurrency tingkat tinggi</li>
+                                    <li>Respon latency mikrodetik</li>
+                                    <li>Akses langsung pool database MySQL native</li>
+                                </ul>
+                            </div>
+
+                            <!-- Jalur PHP Core -->
+                            <div class="p-4 rounded-lg bg-indigo-950/40 border border-indigo-800/40 space-y-2">
+                                <div class="font-bold text-indigo-300 flex items-center justify-between">
+                                    <span>Rute: /api/* & Halaman Web</span>
+                                    <span class="text-[10px] bg-indigo-900/60 text-indigo-200 px-1.5 py-0.5 rounded">REVERSE PROXY</span>
+                                </div>
+                                <p class="text-slate-300 text-[11px] leading-relaxed">
+                                    Diteruskan (Reverse Proxy) ke <strong>PHP Built-in Server Port :8002</strong>.
+                                </p>
+                                <ul class="text-[11px] text-indigo-200/80 list-disc list-inside space-y-1">
+                                    <li>Dikelola oleh <code>routes/web.php</code></li>
+                                    <li>Rendering Template Latte UI</li>
+                                    <li>Middleware, Auth, dan Session PHP</li>
+                                    <li>Action-Domain-Responder (ADR) architecture</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STRUKTUR FOLDER -->
+            <section id="struktur-folder" class="scroll-mt-24 space-y-6">
+                <div class="border-b border-slate-800 pb-4">
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+                        <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-brand-500/10 text-brand-400 border border-brand-500/20 text-sm">02</span>
+                        Struktur Direktori Proyek
+                    </h2>
+                </div>
+
+                <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+                    <pre class="text-xs text-slate-300 overflow-x-auto leading-relaxed"><code>abiesoft/
+├── database/
+│   └── schemas/              # Berkas migrasi database SQL otomatis
+├── public/                   # Web public root (index.php, assets css/js)
+├── routes/
+│   └── web.php               # Pendaftaran rute PHP Core & Web View
+├── src/
+│   ├── GoModules/            # ⚡ Modul Golang Native (Dto, Services, Actions, Tests)
+│   ├── Modules/              # 🐘 Modul PHP Core (Dto, Services, Actions, Tests)
+│   │   └── handler.go        # Sentral routing Direct Go engine (RegisterRoutes)
+│   └── Shared/               # Helper shared antara PHP & Golang
+├── sys/
+│   ├── Console/              # Engine CLI 'php abiesoft' & Commands
+│   ├── Database/             # Database connection wrapper (PDO MySQL)
+│   ├── Http/                 # Router PHP internal & Middleware runner
+│   ├── pigo/                 # Binary & source code Golang Engine Gateway
+│   │   ├── bin/pigo-engine   # Hasil binary build engine Go
+│   │   └── pigo_engine.go    # HTTP Gateway & Reverse Proxy implementation
+│   ├── Testing/              # Base TestCase assertion library
+│   └── View/                 # Template View Renderer (Latte)
+├── templates/                # Template Latte halaman UI (pages)
+└── testing/                  # Tempat testing aplikasi kustom</code></pre>
+                </div>
+            </section>
+
+            <!-- MEMULAI & INSTALASI -->
+            <section id="instalasi" class="scroll-mt-24 space-y-6">
+                <div class="border-b border-slate-800 pb-4">
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+                        <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-brand-500/10 text-brand-400 border border-brand-500/20 text-sm">03</span>
+                        Instalasi & Persiapan Proyek
+                    </h2>
+                </div>
+
+                <div class="space-y-4 text-sm text-slate-300">
+                    <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
+                        <h4 class="font-semibold text-white">1. Clone & Konfigurasi .env</h4>
+                        <p class="text-slate-400 text-xs">Salin file sampel dan sesuaikan kredensial database:</p>
+                        <div class="bg-slate-950 p-3 rounded-lg font-mono text-xs flex justify-between items-center text-emerald-400">
+                            <code>cp env_sample .env</code>
+                            <button onclick="copyToClipboard('cp env_sample .env')" class="text-slate-400 hover:text-white text-[11px]">Copy</button>
+                        </div>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
+                        <h4 class="font-semibold text-white">2. Menginstal Dependensi (Urutan Penting)</h4>
+                        <p class="text-slate-400 text-xs">Jalankan <code>go mod vendor</code> terlebih dahulu, kemudian <code>composer update</code>:</p>
+                        <div class="bg-slate-950 p-3 rounded-lg font-mono text-xs space-y-1 text-slate-200">
+                            <div class="text-cyan-400"># 1. Download vendor modul Golang</div>
+                            <div>go mod vendor</div>
+                            <div class="text-indigo-400 pt-2"># 2. Update pustaka dependensi PHP</div>
+                            <div>composer update</div>
+                        </div>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
+                        <h4 class="font-semibold text-white">3. Build Go Engine & Import Database</h4>
+                        <div class="bg-slate-950 p-3 rounded-lg font-mono text-xs space-y-1 text-slate-200">
+                            <div>php abiesoft build</div>
+                            <div>php abiesoft database:import</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- MENJALANKAN SERVER -->
+            <section id="menjalankan-server" class="scroll-mt-24 space-y-6">
+                <div class="border-b border-slate-800 pb-4">
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+                        <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-brand-500/10 text-brand-400 border border-brand-500/20 text-sm">04</span>
+                        Menjalankan Server (Start)
+                    </h2>
+                </div>
+
+                <div class="p-5 rounded-xl bg-slate-900 border border-slate-800 space-y-3">
+                    <p class="text-sm text-slate-300">
+                        Cukup jalankan satu perintah konsol untuk menyalakan kedua engine secara simultan:
+                    </p>
+                    <div class="bg-slate-950 p-3 rounded-lg font-mono text-sm text-brand-400 flex justify-between items-center">
+                        <code>php abiesoft start</code>
+                        <button onclick="copyToClipboard('php abiesoft start')" class="text-slate-400 hover:text-white text-xs">Copy</button>
+                    </div>
+                    <div class="p-4 rounded-lg bg-slate-950/80 border border-slate-800 text-xs space-y-2 text-slate-300 font-mono">
+                        <div class="text-emerald-400">✔ Port 3000 & 8002 otomatis dibersihkan (Anti-Zombie Port).</div>
+                        <div class="text-cyan-400">✔ Golang Gateway berjalan di http://127.0.0.1:3000</div>
+                        <div class="text-indigo-400">✔ PHP Core Backend berjalan di http://127.0.0.1:8002</div>
+                        <div class="text-amber-400">✔ Graceful Shutdown: Tekan Ctrl+C untuk mematikan kedua proses sekaligus.</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- MELIHAT DAFTAR RUTE -->
+            <section id="melihat-rute" class="scroll-mt-24 space-y-6">
+                <div class="border-b border-slate-800 pb-4">
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+                        <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-brand-500/10 text-brand-400 border border-brand-500/20 text-sm">05</span>
+                        Melihat Daftar Rute (Route)
+                    </h2>
+                </div>
+
+                <div class="p-5 rounded-xl bg-slate-900 border border-slate-800 space-y-3">
+                    <p class="text-sm text-slate-300">
+                        Perintah <code>route</code> memindai dan menyajikan seluruh rute aktif, baik rute PHP Core maupun rute Golang Native Direct Bypass:
+                    </p>
+                    <div class="bg-slate-950 p-3 rounded-lg font-mono text-sm text-brand-400 flex justify-between items-center">
+                        <code>php abiesoft route</code>
+                        <button onclick="copyToClipboard('php abiesoft route')" class="text-slate-400 hover:text-white text-xs">Copy</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- GENERATOR MODUL (MAKE:MODULE) -->
+            <section id="cli-module" class="scroll-mt-24 space-y-6">
+                <div class="border-b border-slate-800 pb-4">
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+                        <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-brand-500/10 text-brand-400 border border-brand-500/20 text-sm">06</span>
+                        Generator Modul (make:module)
+                    </h2>
+                    <p class="text-slate-400 text-sm mt-1">Membuat modul komplit lengkap dengan DTO, Services, Actions, Schema SQL, Rute & Unit Test.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- PHP Module -->
+                    <div class="p-5 rounded-xl bg-slate-900 border border-slate-800 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-indigo-400">Modul PHP Core (Default)</span>
+                            <span class="text-[11px] bg-indigo-900/50 text-indigo-300 px-2 py-0.5 rounded">PHP Core</span>
+                        </div>
+                        <div class="bg-slate-950 p-3 rounded-lg font-mono text-xs text-indigo-300">
+                            <code>php abiesoft make:module users</code>
+                        </div>
+                        <ul class="text-xs text-slate-400 space-y-1 list-disc list-inside">
+                            <li>Schema: <code>database/schemas/*_users_table.sql</code></li>
+                            <li>DTO: <code>src/Modules/Users/Dto/UsersData.php</code></li>
+                            <li>Repo: <code>src/Modules/Users/Services/UsersRepository.php</code></li>
+                            <li>Actions: Index, Get, Post</li>
+                            <li>View Latte: <code>templates/pages/users/index.latte</code></li>
+                            <li>Unit Test: <code>src/Modules/Users/Tests/UsersTest.php</code></li>
+                            <li>Auto-inject ke <code>routes/web.php</code></li>
+                        </ul>
+                    </div>
+
+                    <!-- Golang Module -->
+                    <div class="p-5 rounded-xl bg-slate-900 border border-slate-800 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-cyan-400">Modul Golang Native (--go)</span>
+                            <span class="text-[11px] bg-cyan-900/50 text-cyan-300 px-2 py-0.5 rounded">Golang Direct</span>
+                        </div>
+                        <div class="bg-slate-950 p-3 rounded-lg font-mono text-xs text-cyan-300">
+                            <code>php abiesoft make:module users --go</code>
+                        </div>
+                        <ul class="text-xs text-slate-400 space-y-1 list-disc list-inside">
+                            <li>Schema: <code>database/schemas/*_users_table.sql</code></li>
+                            <li>Go DTO: <code>src/GoModules/Users/Dto/users_dto.go</code></li>
+                            <li>Go Service: <code>src/GoModules/Users/Services/users_service.go</code></li>
+                            <li>Go HTTP Actions: <code>src/GoModules/Users/Actions/users_action.go</code></li>
+                            <li>Go Test: <code>src/GoModules/Users/users_test.go</code></li>
+                            <li><strong>Auto-inject rute & import</strong> ke <code>src/Modules/handler.go</code></li>
+                            <li><strong>Auto-compile Go binary</strong> otomatis tanpa build manual</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- GENERATOR MANDIRI (ACTION, SERVICE, DTO, TEST) -->
+            <section id="cli-action" class="scroll-mt-24 space-y-6">
+                <div class="border-b border-slate-800 pb-4">
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+                        <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-brand-500/10 text-brand-400 border border-brand-500/20 text-sm">07</span>
+                        Generator Komponen Mandiri (Action, Service, DTO, Test)
+                    </h2>
+                    <p class="text-slate-400 text-sm mt-1">Gunakan flag <code>--go</code> jika ingin membuat komponen khusus Golang.</p>
+                </div>
+
+                <div class="space-y-4">
+                    <!-- Action -->
+                    <div class="p-5 rounded-xl bg-slate-900 border border-slate-800 space-y-3">
+                        <h4 class="font-bold text-white text-sm">1. Membuat Action (make:action)</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
+                            <div class="bg-slate-950 p-3 rounded-lg border border-slate-800/80">
+                                <span class="text-indigo-400 block mb-1"># PHP Action:</span>
+                                <code>php abiesoft make:action users detail</code>
+                                <p class="text-[11px] text-slate-500 mt-1 font-sans">src/Modules/Users/Actions/DetailUsersAction.php</p>
+                            </div>
+                            <div class="bg-slate-950 p-3 rounded-lg border border-slate-800/80">
+                                <span class="text-cyan-400 block mb-1"># Golang Action:</span>
+                                <code>php abiesoft make:action users detail --go</code>
+                                <p class="text-[11px] text-slate-500 mt-1 font-sans">src/GoModules/Users/Actions/detail_action.go</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Service -->
+                    <div id="cli-service" class="p-5 rounded-xl bg-slate-900 border border-slate-800 space-y-3">
+                        <h4 class="font-bold text-white text-sm">2. Membuat Service / Repository (make:service)</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
+                            <div class="bg-slate-950 p-3 rounded-lg border border-slate-800/80">
+                                <span class="text-indigo-400 block mb-1"># PHP Repository:</span>
+                                <code>php abiesoft make:service users auth</code>
+                                <p class="text-[11px] text-slate-500 mt-1 font-sans">src/Modules/Users/Services/AuthRepository.php</p>
+                            </div>
+                            <div class="bg-slate-950 p-3 rounded-lg border border-slate-800/80">
+                                <span class="text-cyan-400 block mb-1"># Golang Service:</span>
+                                <code>php abiesoft make:service users auth --go</code>
+                                <p class="text-[11px] text-slate-500 mt-1 font-sans">src/GoModules/Users/Services/auth_service.go</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DTO -->
+                    <div id="cli-dto" class="p-5 rounded-xl bg-slate-900 border border-slate-800 space-y-3">
+                        <h4 class="font-bold text-white text-sm">3. Membuat Data Transfer Object (make:dto)</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
+                            <div class="bg-slate-950 p-3 rounded-lg border border-slate-800/80">
+                                <span class="text-indigo-400 block mb-1"># PHP DTO:</span>
+                                <code>php abiesoft make:dto users login</code>
+                                <p class="text-[11px] text-slate-500 mt-1 font-sans">src/Modules/Users/Dto/LoginData.php</p>
+                            </div>
+                            <div class="bg-slate-950 p-3 rounded-lg border border-slate-800/80">
+                                <span class="text-cyan-400 block mb-1"># Golang DTO:</span>
+                                <code>php abiesoft make:dto users login --go</code>
+                                <p class="text-[11px] text-slate-500 mt-1 font-sans">src/GoModules/Users/Dto/login_dto.go</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Test -->
+                    <div id="cli-test" class="p-5 rounded-xl bg-slate-900 border border-slate-800 space-y-3">
+                        <h4 class="font-bold text-white text-sm">4. Membuat Unit Test (make:test)</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
+                            <div class="bg-slate-950 p-3 rounded-lg border border-slate-800/80">
+                                <span class="text-indigo-400 block mb-1"># PHP Unit Test:</span>
+                                <code>php abiesoft make:test users auth</code>
+                                <p class="text-[11px] text-slate-500 mt-1 font-sans">src/Modules/Users/Tests/AuthTest.php</p>
+                            </div>
+                            <div class="bg-slate-950 p-3 rounded-lg border border-slate-800/80">
+                                <span class="text-cyan-400 block mb-1"># Golang Unit Test:</span>
+                                <code>php abiesoft make:test users auth --go</code>
+                                <p class="text-[11px] text-slate-500 mt-1 font-sans">src/GoModules/Users/auth_test.go</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- MAINTENANCE (DELETE) -->
+            <section id="cli-delete-module" class="scroll-mt-24 space-y-6">
+                <div class="border-b border-slate-800 pb-4">
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+                        <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-brand-500/10 text-brand-400 border border-brand-500/20 text-sm">08</span>
+                        Penghapusan Komponen (Delete)
+                    </h2>
+                    <p class="text-slate-400 text-sm mt-1">Setiap perintah delete dilengkapi proteksi konfirmasi keamanan (y/n) sebelum mengeksekusi.</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="p-5 rounded-xl bg-slate-900 border border-slate-800 space-y-3">
+                        <h4 class="font-bold text-white text-sm">Menghapus Modul Lengkap (delete:module)</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
+                            <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
+                                <span class="text-indigo-400 block mb-1"># Hapus Modul PHP:</span>
+                                <code>php abiesoft delete:module users</code>
+                                <p class="text-[11px] text-slate-500 mt-1 font-sans">Membersihkan folder PHP, template view Latte, rute di web.php, dan tabel SQL.</p>
+                            </div>
+                            <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
+                                <span class="text-cyan-400 block mb-1"># Hapus Modul Golang:</span>
+                                <code>php abiesoft delete:module users --go</code>
+                                <p class="text-[11px] text-slate-500 mt-1 font-sans">Membersihkan folder Go, rute di handler.go, auto-recompile Go binary, dan tabel SQL.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="cli-delete-sub" class="p-5 rounded-xl bg-slate-900 border border-slate-800 space-y-3">
+                        <h4 class="font-bold text-white text-sm">Menghapus File Satuan</h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs font-mono border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-800 text-slate-400">
+                                        <th class="py-2 px-3">Komponen</th>
+                                        <th class="py-2 px-3">Target PHP (Default)</th>
+                                        <th class="py-2 px-3">Target Golang (--go)</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-800/60 text-slate-300">
+                                    <tr>
+                                        <td class="py-2.5 px-3 font-sans font-semibold text-white">Action</td>
+                                        <td class="py-2.5 px-3"><code>php abiesoft delete:action users detail</code></td>
+                                        <td class="py-2.5 px-3 text-cyan-300"><code>php abiesoft delete:action users detail --go</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2.5 px-3 font-sans font-semibold text-white">Service</td>
+                                        <td class="py-2.5 px-3"><code>php abiesoft delete:service users auth</code></td>
+                                        <td class="py-2.5 px-3 text-cyan-300"><code>php abiesoft delete:service users auth --go</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2.5 px-3 font-sans font-semibold text-white">DTO</td>
+                                        <td class="py-2.5 px-3"><code>php abiesoft delete:dto users login</code></td>
+                                        <td class="py-2.5 px-3 text-cyan-300"><code>php abiesoft delete:dto users login --go</code></td>
+                                    </tr>
+                                    <tr id="cli-delete-test">
+                                        <td class="py-2.5 px-3 font-sans font-semibold text-white">Unit Test</td>
+                                        <td class="py-2.5 px-3"><code>php abiesoft delete:test users auth</code></td>
+                                        <td class="py-2.5 px-3 text-cyan-300"><code>php abiesoft delete:test users auth --go</code></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- AUTOMATED UNIT TESTING -->
+            <section id="unit-testing" class="scroll-mt-24 space-y-6">
+                <div class="border-b border-slate-800 pb-4">
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+                        <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-brand-500/10 text-brand-400 border border-brand-500/20 text-sm">09</span>
+                        Sistem Unit Testing Otomatis
+                    </h2>
+                    <p class="text-slate-400 text-sm mt-1">Menguji modul PHP dan Golang secara terpadu langsung dari konsol.</p>
+                </div>
+
+                <div class="p-5 rounded-xl bg-slate-900 border border-slate-800 space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
+                        <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
+                            <span class="text-slate-400 block mb-1"># Menjalankan Semua Test (PHP + Go):</span>
+                            <code class="text-brand-400">php abiesoft test</code>
+                        </div>
+                        <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
+                            <span class="text-slate-400 block mb-1"># Test Modul PHP Spesifik:</span>
+                            <code class="text-indigo-300">php abiesoft test users</code>
+                        </div>
+                        <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
+                            <span class="text-slate-400 block mb-1"># Test Modul Golang Spesifik:</span>
+                            <code class="text-cyan-300">php abiesoft test users --go</code>
+                        </div>
+                        <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
+                            <span class="text-slate-400 block mb-1"># Test Seluruh Modul Golang:</span>
+                            <code class="text-cyan-300">php abiesoft test --go</code>
+                        </div>
+                    </div>
+
+                    <div class="p-4 rounded-lg bg-slate-950 text-xs font-mono space-y-1">
+                        <div class="text-slate-400">=== RUN   TestUserCreation</div>
+                        <div class="text-emerald-400">✔ --- PASS: TestUserCreation (0.00s)</div>
+                        <div class="text-slate-400 pt-2">• Menjalankan suite: UsersTest</div>
+                        <div class="text-emerald-400">  ✔ PASS: testDtoCreation()</div>
+                        <div class="text-emerald-400 font-bold pt-2">🎉 Seluruh Unit Test Berhasil (PASS)!</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- DATABASE & SCHEMA IMPORT -->
+            <section id="database-import" class="scroll-mt-24 space-y-6">
+                <div class="border-b border-slate-800 pb-4">
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+                        <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-brand-500/10 text-brand-400 border border-brand-500/20 text-sm">10</span>
+                        Manajemen Database & Konvensi Skema
+                    </h2>
+                </div>
+
+                <div class="p-5 rounded-xl bg-slate-900 border border-slate-800 space-y-4 text-sm text-slate-300">
+                    <p>
+                        Setiap kali modul dibuat dengan <code>make:module</code>, file skema SQL otomatis disimpan di <code>database/schemas/</code>. Jalankan perintah berikut untuk mengimpor skema yang belum terdaftar:
+                    </p>
+                    <div class="bg-slate-950 p-3 rounded-lg font-mono text-xs text-brand-400 flex justify-between items-center">
+                        <code>php abiesoft database:import</code>
+                        <button onclick="copyToClipboard('php abiesoft database:import')" class="text-slate-400 hover:text-white text-xs">Copy</button>
+                    </div>
+
+                    <div class="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200">
+                        <strong class="font-semibold block mb-1 text-amber-300">📌 Konvensi Standar Kolom AbieSoft:</strong>
+                        Semua tabel database di AbieSoft menggunakan nama kolom standar:
+                        <ul class="list-disc list-inside mt-1 font-mono text-[11px] space-y-0.5">
+                            <li><code>id</code> (INT AUTO_INCREMENT PRIMARY KEY)</li>
+                            <li><code>uuid</code> (VARCHAR(36))</li>
+                            <li><code>dibuat</code> (TIMESTAMP DEFAULT CURRENT_TIMESTAMP)</li>
+                            <li><code>diedit</code> (TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP)</li>
+                            <li><code>dihapus</code> (TIMESTAMP NULL DEFAULT NULL)</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- BUILD GOLANG ENGINE -->
+            <section id="build-golang" class="scroll-mt-24 space-y-6">
+                <div class="border-b border-slate-800 pb-4">
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+                        <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-brand-500/10 text-brand-400 border border-brand-500/20 text-sm">11</span>
+                        Kompilasi Golang Engine (Build)
+                    </h2>
+                </div>
+
+                <div class="p-5 rounded-xl bg-slate-900 border border-slate-800 space-y-3">
+                    <p class="text-sm text-slate-300">
+                        Meskipun <code>make:module --go</code> dan <code>delete:module --go</code> otomatis melakukan recompile, Anda dapat mengompilasi binary Golang secara manual kapan saja dengan:
+                    </p>
+                    <div class="bg-slate-950 p-3 rounded-lg font-mono text-sm text-cyan-400 flex justify-between items-center">
+                        <code>php abiesoft build</code>
+                        <button onclick="copyToClipboard('php abiesoft build')" class="text-slate-400 hover:text-white text-xs">Copy</button>
+                    </div>
+                    <p class="text-xs text-slate-400">
+                        Hasil kompilasi binary disimpan di <code>sys/pigo/bin/pigo-engine</code>.
+                    </p>
+                </div>
+            </section>
+
+            <!-- CHEAT SHEET RINGKASAN CLI -->
+            <section id="cheat-sheet" class="scroll-mt-24 space-y-6 pb-20">
+                <div class="border-b border-slate-800 pb-4">
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+                        <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-brand-500/10 text-brand-400 border border-brand-500/20 text-sm">12</span>
+                        Cheat Sheet Perintah Konsol (CLI)
+                    </h2>
+                </div>
+
+                <div class="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900">
+                    <table class="w-full text-left text-xs font-mono">
+                        <thead class="bg-slate-950/80 border-b border-slate-800 text-slate-400">
+                            <tr>
+                                <th class="py-3 px-4 font-semibold">Perintah CLI</th>
+                                <th class="py-3 px-4 font-semibold">Target / Opsi</th>
+                                <th class="py-3 px-4 font-semibold font-sans">Deskripsi Fungsi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800/60 text-slate-300">
+                            <tr>
+                                <td class="py-3 px-4 text-emerald-400">php abiesoft start</td>
+                                <td class="py-3 px-4">-</td>
+                                <td class="py-3 px-4 font-sans">Menyalakan Hybrid Engine Gateway (:3000 & :8002)</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4 text-cyan-400">php abiesoft route</td>
+                                <td class="py-3 px-4">-</td>
+                                <td class="py-3 px-4 font-sans">Menampilkan seluruh rute terdaftar (PHP Core & Direct Go)</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4 text-cyan-400">php abiesoft build</td>
+                                <td class="py-3 px-4">-</td>
+                                <td class="py-3 px-4 font-sans">Mengompilasi binary engine Golang (sys/pigo/bin/pigo-engine)</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4 text-amber-400">php abiesoft test</td>
+                                <td class="py-3 px-4">[module] [--go]</td>
+                                <td class="py-3 px-4 font-sans">Menjalankan Automated Unit Test runner (PHP / Go)</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4 text-brand-400">php abiesoft make:module</td>
+                                <td class="py-3 px-4">&lt;nama&gt; [--go]</td>
+                                <td class="py-3 px-4 font-sans">Membuat modul komplit (DTO, Service, Action, Route, Test)</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4 text-brand-400">php abiesoft make:action</td>
+                                <td class="py-3 px-4">&lt;mod&gt; &lt;aksi&gt; [--go]</td>
+                                <td class="py-3 px-4 font-sans">Membuat file Action mandiri (PHP atau Go)</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4 text-brand-400">php abiesoft make:service</td>
+                                <td class="py-3 px-4">&lt;mod&gt; &lt;nama&gt; [--go]</td>
+                                <td class="py-3 px-4 font-sans">Membuat file Service / Repository mandiri (PHP atau Go)</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4 text-brand-400">php abiesoft make:dto</td>
+                                <td class="py-3 px-4">&lt;mod&gt; &lt;nama&gt; [--go]</td>
+                                <td class="py-3 px-4 font-sans">Membuat file Data Transfer Object (DTO) mandiri</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4 text-brand-400">php abiesoft make:test</td>
+                                <td class="py-3 px-4">&lt;mod&gt; [nama] [--go]</td>
+                                <td class="py-3 px-4 font-sans">Membuat file Unit Test mandiri (PHP atau Go)</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4 text-rose-400">php abiesoft delete:module</td>
+                                <td class="py-3 px-4">&lt;nama&gt; [--go]</td>
+                                <td class="py-3 px-4 font-sans">Menghapus modul, auto-clean rute, tabel & skema</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4 text-rose-400">php abiesoft delete:action</td>
+                                <td class="py-3 px-4">&lt;mod&gt; &lt;aksi&gt; [--go]</td>
+                                <td class="py-3 px-4 font-sans">Menghapus file Action tertentu</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4 text-rose-400">php abiesoft delete:service</td>
+                                <td class="py-3 px-4">&lt;mod&gt; &lt;nama&gt; [--go]</td>
+                                <td class="py-3 px-4 font-sans">Menghapus file Service / Repository tertentu</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4 text-rose-400">php abiesoft delete:dto</td>
+                                <td class="py-3 px-4">&lt;mod&gt; &lt;nama&gt; [--go]</td>
+                                <td class="py-3 px-4 font-sans">Menghapus file DTO tertentu</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4 text-rose-400">php abiesoft delete:test</td>
+                                <td class="py-3 px-4">&lt;mod&gt; [nama] [--go]</td>
+                                <td class="py-3 px-4 font-sans">Menghapus file Unit Test tertentu</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4 text-slate-400">php abiesoft database:import</td>
+                                <td class="py-3 px-4">-</td>
+                                <td class="py-3 px-4 font-sans">Mengimpor seluruh skema SQL database ke MySQL</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-slate-900 bg-slate-950 py-8 text-center text-xs text-slate-500">
+        <p>AbieSoft Framework v4.0 &bull; Dibuat dengan arsitektur Hybrid PHP & Golang &bull; Dokumentasi Resmi</p>
+    </footer>
+
+    <!-- INTERACTIVE JAVASCRIPT -->
+    <script>
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Teks berhasil disalin: ' + text);
+            });
+        }
+
+        // Live Search Filter
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', function(e) {
+                const term = e.target.value.toLowerCase().trim();
+                const sections = document.querySelectorAll('main section');
+                
+                sections.forEach(section => {
+                    if (!term) {
+                        section.style.display = '';
+                        return;
+                    }
+                    const text = section.innerText.toLowerCase();
+                    if (text.includes(term)) {
+                        section.style.display = '';
+                    } else {
+                        section.style.display = 'none';
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>
